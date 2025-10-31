@@ -1,0 +1,109 @@
+# AI Learning Companion System Configuration
+
+# System Settings
+system:
+  version: "1.0.0"
+  environment: "development"  # development, production
+  debug_mode: true
+
+# Privacy Settings
+privacy:
+  save_raw_images: false  # NEVER save raw video frames
+  save_feature_vectors: true  # Save extracted features only
+  encryption_enabled: true
+  data_retention_days: 90
+  parent_view_mode: "aggregated_only"  # No live surveillance
+
+# Camera Settings
+camera:
+  device_id: 0
+  resolution_width: 1280
+  resolution_height: 720
+  frame_rate: 30
+  sample_interval: 3  # seconds between frame analysis
+
+# Vision Analysis
+vision:
+  enable_pose_detection: true
+  enable_face_detection: true
+  enable_hand_tracking: true
+  enable_emotion_recognition: true
+  confidence_threshold: 0.5
+
+# OCR Settings
+ocr:
+  engine: "paddleocr"  # paddleocr, google_vision, tesseract
+  languages: ["en", "ch"]  # English and Chinese
+  enable_math_recognition: true
+  enable_handwriting: true
+  use_gpu: false
+
+# Knowledge Graph
+knowledge_graph:
+  database: "local"  # local, neo4j
+  auto_save_interval: 300  # seconds
+  export_path: "data/knowledge_graphs/"
+
+# Time Tracking
+time_tracking:
+  idle_threshold: 120  # seconds
+  distraction_threshold: 90  # seconds
+  fatigue_threshold: 5400  # 90 minutes
+  break_reminder_interval: 1500  # 25 minutes (Pomodoro)
+
+# AI Companion
+ai_companion:
+  personality: "encouraging"  # encouraging, strict, playful, academic
+  default_mode: "coach"  # guide, coach, friend
+  intervention_cooldown: 300  # seconds
+  enable_voice: false
+  llm_backend: "local"  # local, openai, claude
+
+  # Intervention rules
+  interventions:
+    enable_idle_detection: true
+    enable_fatigue_detection: true
+    enable_confusion_detection: true
+    enable_motivation: true
+    enable_break_suggestions: true
+
+# Dashboard
+dashboard:
+  update_interval: 60  # seconds
+  student_view_enabled: true
+  parent_view_enabled: true
+  export_format: "json"  # json, pdf
+
+# Storage
+storage:
+  database_type: "sqlite"  # sqlite, postgresql
+  database_path: "data/companion.db"
+  backup_enabled: true
+  backup_interval: 86400  # daily
+
+# API Server
+api:
+  host: "0.0.0.0"
+  port: 8000
+  enable_cors: true
+  allowed_origins: ["http://localhost:3000", "http://localhost:5173"]
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  log_to_file: true
+  log_file_path: "logs/companion.log"
+  max_file_size_mb: 10
+
+# Performance
+performance:
+  use_gpu: false
+  max_concurrent_sessions: 10
+  frame_buffer_size: 30
+
+# Features
+features:
+  gamification_enabled: true
+  achievements_enabled: true
+  learning_paths_enabled: true
+  peer_comparison_enabled: false  # Privacy consideration
