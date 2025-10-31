@@ -1,65 +1,65 @@
-# AI Learning Companion System - Architecture Design
+# AI陪伴学习系统 - 架构设计文档
 
-## 📐 System Overview
+## 📐 系统概述
 
-The AI Learning Companion System transforms traditional supervision into intelligent companionship through:
-- **Vision-based behavior analysis** (non-invasive, privacy-safe)
-- **Multi-modal learning understanding** (OCR, handwriting, content recognition)
-- **Emotional intelligence** (fatigue detection, motivation, encouragement)
-- **Adaptive interaction** (Guide/Coach/Friend modes)
-- **Progressive learning tracking** (knowledge graphs, personalized paths)
+AI陪伴学习系统通过以下方式将传统监督转变为智能陪伴：
+- **基于视觉的行为分析**（非侵入式、隐私安全）
+- **多模态学习理解**（OCR、手写、内容识别）
+- **情感智能**（疲劳检测、激励、鼓励）
+- **自适应交互**（导师/教练/朋友模式）
+- **渐进式学习追踪**（知识图谱、个性化路径）
 
 ---
 
-## 🏗️ System Architecture
+## 🏗️ 系统架构
 
 ```mermaid
 flowchart TD
-    subgraph Input["📥 Input Layer"]
-        A1[Camera Feed - Hovering Desk View]
-        A2[Screen Capture - Optional]
-        A3[Sensor Data - Pen/Keyboard/Mouse]
+    subgraph Input["📥 输入层"]
+        A1[相机采集 - 俯视桌面]
+        A2[屏幕捕获 - 可选]
+        A3[传感器数据 - 笔/键盘/鼠标]
     end
 
-    subgraph Sampling["🎯 Smart Sampling Engine"]
-        B1[Motion Detection]
-        B2[Frame Sampler - 1 frame/2-5s]
-        B3[Event Trigger - Page turn, posture change]
+    subgraph Sampling["🎯 智能采样引擎"]
+        B1[动作检测]
+        B2[帧采样器 - 每2-5秒1帧]
+        B3[事件触发 - 翻页、姿势变化]
     end
 
-    subgraph AI["🤖 AI Recognition Engine"]
-        C1[Vision Analysis Module]
-        C2[OCR & Handwriting Module]
-        C3[NLP Content Analysis]
-        C4[Emotion & Attention Detector]
+    subgraph AI["🤖 AI识别引擎"]
+        C1[视觉分析模块]
+        C2[OCR与手写模块]
+        C3[NLP内容分析]
+        C4[情绪与注意力检测]
     end
 
-    subgraph Processing["⚙️ Processing Layer"]
-        D1[Knowledge Graph Engine]
-        D2[Time Tracking System]
-        D3[Behavior Pattern Analyzer]
-        D4[Progress Evaluator]
+    subgraph Processing["⚙️ 处理层"]
+        D1[知识图谱引擎]
+        D2[时间追踪系统]
+        D3[行为模式分析]
+        D4[进度评估器]
     end
 
-    subgraph Intelligence["🧠 AI Companion Intelligence"]
-        E1[Context Manager]
-        E2[Response Generator]
-        E3[Mode Selector - Guide/Coach/Friend]
-        E4[Intervention Decision Engine]
+    subgraph Intelligence["🧠 AI伙伴智能"]
+        E1[上下文管理器]
+        E2[回应生成器]
+        E3[模式选择器 - 导师/教练/朋友]
+        E4[干预决策引擎]
     end
 
-    subgraph Storage["💾 Data Storage - Privacy First"]
-        F1[Feature Vectors Only]
-        F2[Learning Progress DB]
-        F3[Anonymized Metrics]
-        F4[Encrypted Local Storage]
+    subgraph Storage["💾 数据存储 - 隐私优先"]
+        F1[仅特征向量]
+        F2[学习进度数据库]
+        F3[匿名化指标]
+        F4[加密本地存储]
     end
 
-    subgraph Output["📊 Output Layer"]
-        G1[Student Dashboard]
-        G2[Parent Dashboard]
-        G3[AI Chat Interface]
-        G4[Voice/Text Interaction]
+    subgraph Output["📊 输出层"]
+        G1[学生仪表板]
+        G2[家长仪表板]
+        G3[AI聊天界面]
+        G4[语音/文本交互]
     end
 
     A1 --> B1
@@ -100,164 +100,171 @@ flowchart TD
 
 ---
 
-## 🔧 Core Modules
+## 🔧 核心模块
 
-### 1. Vision Analysis Module
-**Responsibilities:**
-- Detect student posture (slouching, leaning, upright)
-- Track gaze direction and focus duration
-- Recognize facial expressions (concentration, confusion, fatigue)
-- Detect hand/pen activity
+### 1. 视觉分析模块
 
-**Technologies:**
-- MediaPipe for pose estimation
-- OpenCV for image processing
-- Pre-trained emotion recognition models (FER+, AffectNet)
+**职责：**
+- 检测学生姿势（驼背、倾斜、端正）
+- 追踪视线方向和专注时长
+- 识别面部表情（专注、困惑、疲劳）
+- 检测手/笔活动
 
-**Privacy:**
-- No video storage, only feature vectors
-- Face embeddings discarded after emotion inference
+**技术栈：**
+- MediaPipe用于姿势估计
+- OpenCV用于图像处理
+- 预训练情绪识别模型（FER+、AffectNet）
 
----
-
-### 2. OCR & Handwriting Recognition Module
-**Responsibilities:**
-- Extract text from notebooks, textbooks, screens
-- Recognize handwritten answers and exercises
-- Detect mathematical equations and diagrams
-- Identify correctness through pattern matching
-
-**Technologies:**
-- PaddleOCR (Chinese + English)
-- Google Cloud Vision API (optional)
-- Custom handwriting model (if needed)
-
-**Output:**
-- Structured text with timestamps
-- Topic tags (e.g., "Math - Quadratic Equations")
-- Difficulty estimation
+**隐私保护：**
+- 不存储视频，仅保存特征向量
+- 情绪推理后即丢弃面部嵌入
 
 ---
 
-### 3. Knowledge Graph Engine
-**Responsibilities:**
-- Map detected content to knowledge domains
-- Build personalized learning paths
-- Track mastery levels by topic
-- Suggest next learning steps
+### 2. OCR与手写识别模块
 
-**Structure:**
+**职责：**
+- 从笔记本、教科书、屏幕提取文本
+- 识别手写答案和练习题
+- 检测数学方程和图表
+- 通过模式匹配识别正确性
+
+**技术栈：**
+- PaddleOCR（中文+英文）
+- Google Cloud Vision API（可选）
+- 自定义手写模型（按需）
+
+**输出：**
+- 带时间戳的结构化文本
+- 主题标签（如"数学 - 二次方程"）
+- 难度估计
+
+---
+
+### 3. 知识图谱引擎
+
+**职责：**
+- 将检测到的内容映射到知识领域
+- 构建个性化学习路径
+- 按主题追踪掌握水平
+- 建议下一步学习内容
+
+**结构：**
 ```
-Knowledge Graph Schema:
-- Subject → Chapter → Topic → Concept → Exercise
-- Difficulty: [Easy, Medium, Hard]
-- Mastery: [0-100%]
-- Prerequisites: [List of concepts]
+知识图谱模式：
+- 学科 → 章节 → 主题 → 概念 → 练习
+- 难度：[简单、中等、困难]
+- 掌握度：[0-100%]
+- 前置知识：[概念列表]
 ```
 
-**Technologies:**
-- Neo4j or in-memory graph (NetworkX)
-- NLP topic modeling (BERT-based)
+**技术栈：**
+- Neo4j或内存图（NetworkX）
+- 基于BERT的NLP主题建模
 
 ---
 
-### 4. Time Tracking & Behavior Detection
-**Responsibilities:**
-- Detect learning states: **Active, Idle, Break, Return**
-- Measure focused study time vs. distraction time
-- Track session duration and frequency
-- Detect patterns (e.g., productive hours, fatigue cycles)
+### 4. 时间追踪与行为检测
 
-**Logic:**
+**职责：**
+- 检测学习状态：**活跃、空闲、休息、返回**
+- 测量专注学习时间 vs. 分心时间
+- 追踪会话时长和频率
+- 检测模式（如高效时段、疲劳周期）
+
+**逻辑：**
 ```python
-States:
-- ACTIVE: Writing/reading detected, gaze on desk
-- IDLE: No activity for >2 minutes
-- DISTRACTED: Gaze away, no pen movement
-- FATIGUED: Slumped posture, rubbing eyes
+状态：
+- 活跃：检测到书写/阅读，视线在桌面
+- 空闲：超过2分钟无活动
+- 分心：视线移开，无笔动作
+- 疲劳：姿势萎靡，揉眼睛
 ```
 
 ---
 
-### 5. AI Companion Chat System
-**Modes:**
+### 5. AI伙伴聊天系统
 
-#### 🎓 Guide Mode
-- Explains difficult concepts
-- Provides hints without giving away answers
-- Asks Socratic questions
+**模式：**
 
-**Example:**
-> "I see you're working on factoring polynomials. Let me ask: what do you notice about the coefficients?"
+#### 🎓 导师模式
+- 解释困难概念
+- 提供提示而不直接给答案
+- 提出苏格拉底式问题
 
-#### 💪 Coach Mode
-- Tracks progress and provides feedback
-- Celebrates achievements
-- Sets micro-goals
+**示例：**
+> "我看到你在做因式分解。让我问你：你注意到系数有什么规律吗？"
 
-**Example:**
-> "You've completed 8 problems today—great momentum! Can you aim for 10?"
+#### 💪 教练模式
+- 追踪进度并提供反馈
+- 庆祝成就
+- 设定微目标
 
-#### 🤗 Friend Mode
-- Empathetic conversation
-- Emotional support during frustration
-- Casual check-ins
+**示例：**
+> "你今天已经完成了8道题——势头很好！能冲10道吗？"
 
-**Example:**
-> "Looks like you've been at this for an hour. Want to chat about something else for a minute?"
+#### 🤗 朋友模式
+- 同理心对话
+- 挫折时的情感支持
+- 随意打招呼
 
-**Technologies:**
-- LLM backend (GPT-4, Claude, or open-source like Llama)
-- Context window includes recent learning events
-- Tone and personality configured per student
+**示例：**
+> "看起来你已经在这个问题上花了一个小时了。要不要聊点别的放松一下？"
 
----
-
-### 6. Dashboard System
-
-#### Student Dashboard
-**Features:**
-- Daily/weekly learning time visualization
-- Topic mastery radar chart
-- Recent achievements and streaks
-- AI companion conversation history
-- Personalized recommendations
-
-#### Parent Dashboard
-**Features:**
-- Anonymized progress summaries
-- Time investment trends (no live surveillance)
-- Subject-wise performance
-- AI-generated insights (e.g., "Math skills improving steadily")
-- Optional weekly reports
-
-**Privacy Controls:**
-- Parents see **aggregated data only**, no live feed
-- Student can hide specific sessions (flagged as "private study")
+**技术栈：**
+- LLM后端（GPT-4、Claude或开源如Llama）
+- 上下文窗口包含最近的学习事件
+- 可配置的语调和个性
 
 ---
 
-## 🔒 Privacy & Security Architecture
+### 6. 仪表板系统
 
-### Principles
-1. **Local-first processing**: All AI inference runs on-device when possible
-2. **No continuous recording**: Only keyframes (1 per 2-5s) saved as feature vectors
-3. **Encrypted storage**: SQLite with SQLCipher for local DB
-4. **Data minimization**: Discard raw images after feature extraction
-5. **User control**: Student can pause/disable monitoring anytime
+#### 学生仪表板
+**功能：**
+- 每日/每周学习时间可视化
+- 主题掌握度雷达图
+- 近期成就和连续打卡
+- AI伙伴对话历史
+- 个性化推荐
 
-### Data Lifecycle
+#### 家长仪表板
+**功能：**
+- 匿名化进度总结
+- 时间投入趋势（无实时监控）
+- 按学科分类的表现
+- AI生成的洞察（如"数学技能稳步提高"）
+- 可选的每周报告
+
+**隐私控制：**
+- 家长仅看**汇总数据**，无实时监控
+- 学生可隐藏特定会话（标记为"私人学习"）
+
+---
+
+## 🔒 隐私与安全架构
+
+### 原则
+
+1. **本地优先处理**：尽可能在设备上进行所有AI推理
+2. **不连续录制**：仅保存关键帧（每2-5秒1帧）为特征向量
+3. **加密存储**：本地数据库使用SQLCipher加密
+4. **数据最小化**：特征提取后丢弃原始图像
+5. **用户控制**：学生可随时暂停/禁用监控
+
+### 数据生命周期
+
 ```
-Camera Feed → Frame Sampling → Feature Extraction → Encrypted Storage
-                  ↓                       ↓                ↓
-             (Discarded)          (AI Analysis)     (Dashboard)
+相机帧 → 帧采样 → 特征提取 → 加密存储
+   ↓         ↓          ↓          ↓
+(丢弃)    (特征)    (AI分析)   (仪表板)
 ```
 
 ---
 
-## 📊 Data Models
+## 📊 数据模型
 
-### Session Record
+### 会话记录
 ```json
 {
   "session_id": "uuid",
@@ -267,23 +274,23 @@ Camera Feed → Frame Sampling → Feature Extraction → Encrypted Storage
   "total_time": 2700,
   "focused_time": 2400,
   "idle_time": 300,
-  "detected_topics": ["Math - Algebra", "Physics - Mechanics"],
+  "detected_topics": ["数学 - 代数", "物理 - 力学"],
   "emotion_summary": {
     "concentrated": 0.7,
     "confused": 0.2,
     "fatigued": 0.1
   },
   "ai_interactions": 5,
-  "achievements": ["45min_streak", "completed_10_problems"]
+  "achievements": ["45分钟连续学习", "完成10道题"]
 }
 ```
 
-### Knowledge State
+### 知识状态
 ```json
 {
   "student_id": "uuid",
   "knowledge_map": {
-    "Math.Algebra.Quadratics": {
+    "数学.代数.二次方程": {
       "mastery": 0.75,
       "last_practiced": "2025-10-31T10:00:00Z",
       "exercises_completed": 23,
@@ -295,96 +302,98 @@ Camera Feed → Frame Sampling → Feature Extraction → Encrypted Storage
 
 ---
 
-## 🚀 Technology Stack
+## 🚀 技术栈
 
-### Backend
-- **Language**: Python 3.10+
-- **Framework**: FastAPI (REST API + WebSockets)
-- **AI/ML**:
-  - OpenCV, MediaPipe (vision)
-  - PaddleOCR (text recognition)
-  - Transformers (NLP)
-  - scikit-learn (pattern analysis)
-- **Database**: SQLite (local), PostgreSQL (optional cloud)
-- **LLM Integration**: OpenAI API / Anthropic Claude / Local LLM
+### 后端
+- **语言**：Python 3.10+
+- **框架**：FastAPI（REST API + WebSockets）
+- **AI/ML**：
+  - OpenCV、MediaPipe（视觉）
+  - PaddleOCR（文本识别）
+  - Transformers（NLP）
+  - scikit-learn（模式分析）
+- **数据库**：SQLite（本地）、PostgreSQL（可选云端）
+- **LLM集成**：OpenAI API / Anthropic Claude / 本地LLM
 
-### Frontend
-- **Framework**: React + TypeScript
-- **UI Library**: Material-UI / Ant Design
-- **Charts**: Recharts / D3.js
-- **Real-time**: Socket.IO
+### 前端
+- **框架**：React + TypeScript
+- **UI库**：Material-UI / Ant Design
+- **图表**：Recharts / D3.js
+- **实时**：Socket.IO
 
-### Deployment
-- **Local**: Docker Compose
-- **Edge Device**: Raspberry Pi 4 / NVIDIA Jetson Nano (for camera)
-- **Cloud (optional)**: AWS/GCP for backups and advanced models
+### 部署
+- **本地**：Docker Compose
+- **边缘设备**：树莓派4 / NVIDIA Jetson Nano（用于相机）
+- **云端（可选）**：AWS/GCP用于备份和高级模型
 
 ---
 
-## 🎯 AI Companion Interaction Logic
+## 🎯 AI伙伴交互逻辑
 
-### Decision Tree for Interventions
+### 干预决策树
 
 ```
-Check every 30 seconds:
+每30秒检查一次：
 
-IF idle_time > 180s AND not on_break:
-    → "You've been idle for 3 minutes. Need a break?"
+如果 空闲时间 > 180秒 且 未在休息：
+    → "你已经有3分钟没动了，需要休息吗？"
 
-IF focused_time > 25*60s AND not_interrupted_recently:
-    → "You've been focused for 25 minutes—great job! Take a 5-min break?"
+如果 专注时间 > 25*60秒 且 最近未打断：
+    → "你已经专注了25分钟——做得好！要休息5分钟吗？"
 
-IF emotion == "confused" for > 5 minutes:
-    → "I notice you're stuck. Want me to explain this concept?"
+如果 情绪 == "困惑" 持续 > 5分钟：
+    → "我注意到你卡住了。要我解释一下这个概念吗？"
 
-IF posture == "slouched" for > 10 minutes:
-    → "Your posture looks uncomfortable. Let's stretch!"
+如果 姿势 == "驼背" 持续 > 10分钟：
+    → "你的姿势看起来不太舒服。我们伸展一下吧！"
 
-IF session_end AND exercises_completed > yesterday:
-    → "Awesome! You completed 3 more exercises than yesterday!"
+如果 会话结束 且 今天完成的练习 > 昨天：
+    → "太棒了！你比昨天多完成了3道题！"
 ```
 
 ---
 
-## 🧪 Example Workflows
+## 🧪 示例工作流
 
-### Workflow 1: Homework Session
-1. Student sits down, camera detects start
-2. OCR recognizes "Math homework - Chapter 5"
-3. Knowledge graph tags topic as "Algebra - Systems of Equations"
-4. Student works for 15 minutes (tracked as focused time)
-5. AI detects confusion (facial expression + long pause on one problem)
-6. AI Companion (Guide mode): "That problem looks tricky. Have you tried the elimination method?"
-7. Student continues, completes homework
-8. Dashboard updates: +45 minutes study time, Algebra mastery: 68% → 72%
+### 工作流1：作业会话
+1. 学生坐下，相机检测到开始
+2. OCR识别"数学作业 - 第5章"
+3. 知识图谱将主题标记为"代数 - 方程组"
+4. 学生工作15分钟（追踪为专注时间）
+5. AI检测到困惑（面部表情 + 在一道题上长时间停顿）
+6. AI伙伴（导师模式）："这道题看起来有点棘手。你试过消元法了吗？"
+7. 学生继续，完成作业
+8. 仪表板更新：+45分钟学习时间，代数掌握度：68% → 72%
 
-### Workflow 2: Fatigue Detection
-1. Camera detects student rubbing eyes, slouching
-2. Time tracker shows 90 minutes of continuous study
-3. AI Companion (Friend mode): "You've been studying hard! Your brain needs a break. Want to do a quick 2-minute eye exercise?"
-4. Student accepts, takes break
-5. Returns refreshed, AI welcomes back: "Ready to continue? You're doing great!"
-
----
-
-## 🔮 Future Enhancements
-- **Multi-student support** (classroom mode)
-- **Gamification** (XP, badges, leaderboards)
-- **AR overlay** (project hints/feedback on desk surface)
-- **Voice-only mode** (hands-free interaction during study)
-- **Parent-student collaborative goal setting**
-- **Integration with online learning platforms** (Khan Academy, Coursera)
+### 工作流2：疲劳检测
+1. 相机检测到学生揉眼睛、驼背
+2. 时间追踪器显示连续学习90分钟
+3. AI伙伴（朋友模式）："你已经很努力学习了！你的大脑需要休息。要做一个2分钟的眼部运动吗？"
+4. 学生接受，休息
+5. 返回后精神焕发，AI欢迎回来："准备好继续了吗？你做得很棒！"
 
 ---
 
-## 📚 References
-- MediaPipe: https://google.github.io/mediapipe/
-- PaddleOCR: https://github.com/PaddlePaddle/PaddleOCR
-- Privacy-preserving ML: Federated Learning, Differential Privacy
-- Educational Psychology: Spacing effect, Pomodoro Technique, Flow State
+## 🔮 未来增强
+
+- **多学生支持**（教室模式）
+- **游戏化**（经验值、徽章、排行榜）
+- **AR覆盖**（在桌面上投影提示/反馈）
+- **纯语音模式**（学习期间免提交互）
+- **家长-学生协作目标设定**
+- **与在线学习平台集成**（Khan Academy、Coursera）
 
 ---
 
-**Version**: 1.0
-**Last Updated**: 2025-10-31
-**Maintainer**: AI Systems Architecture Team
+## 📚 参考资料
+
+- MediaPipe：https://google.github.io/mediapipe/
+- PaddleOCR：https://github.com/PaddlePaddle/PaddleOCR
+- 隐私保护机器学习：联邦学习、差分隐私
+- 教育心理学：间隔效应、番茄工作法、心流状态
+
+---
+
+**版本**：1.0
+**最后更新**：2025-10-31
+**维护者**：AI系统架构团队
