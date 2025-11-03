@@ -21,21 +21,19 @@ class DoubaoAPI:
         """
         self.api_key = api_key
         self.base_url = "https://ark.cn-beijing.volces.com/api/v3"
-        self.model = "doubao-seed-1-6-251015"
+        self.model = "doubao-seed-1-6-vision-250815"
         self.headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}"
         }
 
-    def analyze_image(self, image_data: str, question: str,
-                     reasoning_effort: str = "medium") -> Dict:
+    def analyze_image(self, image_data: str, question: str) -> Dict:
         """
         分析图片内容
 
         Args:
             image_data: Base64编码的图片数据或图片URL
             question: 要问的问题
-            reasoning_effort: 推理强度 (low, medium, high)
 
         Returns:
             API响应字典
@@ -52,7 +50,6 @@ class DoubaoAPI:
 
         payload = {
             "model": self.model,
-            "max_completion_tokens": 65535,
             "messages": [
                 {
                     "role": "user",
@@ -69,8 +66,7 @@ class DoubaoAPI:
                         }
                     ]
                 }
-            ],
-            "reasoning_effort": reasoning_effort
+            ]
         }
 
         try:
@@ -108,7 +104,7 @@ class DoubaoAPI:
 
 请用JSON格式返回结果，包含：subject（学科）、topic（具体主题）、difficulty（难度）、content_type（内容类型）、detected_text（识别的文字）、learning_stage（学习阶段：预习/学习/练习/复习）"""
 
-        result = self.analyze_image(image_data, question, reasoning_effort="high")
+        result = self.analyze_image(image_data, question)
 
         if "error" in result:
             return result
@@ -152,7 +148,7 @@ class DoubaoAPI:
 
 请用JSON格式返回，包含：posture_score（姿势评分0-100）、attention_level（专注度0-100）、emotional_state（情绪状态）、suggestions（改进建议）"""
 
-        result = self.analyze_image(image_data, question, reasoning_effort="medium")
+        result = self.analyze_image(image_data, question)
 
         if "error" in result:
             return result
@@ -213,14 +209,12 @@ class DoubaoAPI:
 
         payload = {
             "model": self.model,
-            "max_completion_tokens": 65535,
             "messages": [
                 {
                     "role": "user",
                     "content": prompt
                 }
-            ],
-            "reasoning_effort": "medium"
+            ]
         }
 
         try:
@@ -270,9 +264,7 @@ class DoubaoAPI:
 
         payload = {
             "model": self.model,
-            "max_completion_tokens": 65535,
-            "messages": messages,
-            "reasoning_effort": "medium"
+            "messages": messages
         }
 
         try:
@@ -306,7 +298,7 @@ class DoubaoAPI:
 
 # 全局实例（使用环境变量或配置文件中的API密钥）
 # 用户可以替换为自己的API密钥
-DEFAULT_API_KEY = "d0f9bb92-cfa9-4261-912c-621c3fc6d509"
+DEFAULT_API_KEY = "1cf58d28-bb11-4211-92c9-60001ee76343"
 doubao_client = DoubaoAPI(DEFAULT_API_KEY)
 
 
