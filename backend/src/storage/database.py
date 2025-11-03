@@ -3,10 +3,10 @@
 使用SQLite存储用户信息和学习数据
 """
 
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float, Boolean, Text
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float, Boolean, Text, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from datetime import datetime
+from datetime import datetime, date, timedelta
 import hashlib
 import secrets
 
@@ -24,6 +24,8 @@ class User(Base):
     salt = Column(String(64), nullable=False)
     full_name = Column(String(100))
     user_type = Column(String(20), default='student')  # student, parent, teacher
+    membership_type = Column(String(20), default='free')  # free, vip
+    membership_expires = Column(DateTime)  # VIP过期时间
     created_at = Column(DateTime, default=datetime.now)
     last_login = Column(DateTime)
     is_active = Column(Boolean, default=True)
@@ -41,6 +43,20 @@ class User(Base):
     def _hash_password(password: str, salt: str) -> str:
         """密码哈希"""
         return hashlib.sha256(f"{password}{salt}".encode()).hexdigest()
+
+    def is_vip(self) -> bool:
+        """检查是否为VIP会员"""
+        if self.membership_type == 'vip':
+            if self.membership_expires:
+                return datetime.now() < self.membership_expires
+            return True  # 永久VIP
+        return False
+
+    def get_daily_limit(self) -> int:
+        """获取每日使用时长限制（秒）"""
+        if self.is_vip():
+            return -1  # -1表示无限制
+        return 30 * 60  # 普通会员30分钟
 
 
 class StudentProfile(Base):
@@ -105,6 +121,20 @@ class AIInteraction(Base):
     ai_response = Column(Text)
     intent = Column(String(50))
     helpful = Column(Boolean)  # 用户反馈
+
+
+class DailyUsage(Base):
+    """每日使用时长跟踪"""
+    __tablename__ = 'daily_usage'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, nullable=False)
+    usage_date = Column(Date, default=date.today, nullable=False)
+    ai_analysis_time = Column(Integer, default=0)  # AI分析使用时长（秒）
+    last_updated = Column(DateTime, default=datetime.now)
+
+    def __repr__(self):
+        return f"<DailyUsage(user_id={self.user_id}, date={self.usage_date}, time={self.ai_analysis_time}s)>"
 
 
 # 数据库管理类
@@ -268,6 +298,135 @@ class DatabaseManager:
             return session.query(KnowledgeProgress).filter(
                 KnowledgeProgress.user_id == user_id
             ).all()
+        finally:
+            session.close()
+
+    def get_daily_usage(self, user_id: int, usage_date: date = None) -> DailyUsage:
+        """获取指定日期的使用记录"""
+        if usage_date is None:
+            usage_date = date.today()
+
+        session = self.get_session()
+        try:
+            usage = session.query(DailyUsage).filter(
+                DailyUsage.user_id == user_id,
+                DailyUsage.usage_date == usage_date
+            ).first()
+
+            if not usage:
+                usage = DailyUsage(user_id=user_id, usage_date=usage_date)
+                session.add(usage)
+                session.commit()
+                session.refresh(usage)
+
+            return usage
+        finally:
+            session.close()
+
+    def add_usage_time(self, user_id: int, seconds: int) -> tuple[bool, int]:
+        """
+        增加使用时长
+        返回: (是否允许继续使用, 今日剩余时长)
+        """
+        session = self.get_session()
+        try:
+            # 获取用户信息
+            user = session.query(User).filter(User.id == user_id).first()
+            if not user:
+                return False, 0
+
+            # 获取今日使用记录
+            today = date.today()
+            usage = session.query(DailyUsage).filter(
+                DailyUsage.user_id == user_id,
+                DailyUsage.usage_date == today
+            ).first()
+
+            if not usage:
+                usage = DailyUsage(user_id=user_id, usage_date=today)
+                session.add(usage)
+
+            # 更新使用时长
+            usage.ai_analysis_time += seconds
+            usage.last_updated = datetime.now()
+            session.commit()
+
+            # 检查是否超限
+            daily_limit = user.get_daily_limit()
+            if daily_limit == -1:  # VIP无限制
+                return True, -1
+
+            remaining = daily_limit - usage.ai_analysis_time
+            return remaining > 0, max(0, remaining)
+
+        finally:
+            session.close()
+
+    def check_usage_limit(self, user_id: int) -> tuple[bool, int]:
+        """
+        检查是否达到使用限制
+        返回: (是否可以继续使用, 剩余时长秒数)
+        """
+        session = self.get_session()
+        try:
+            user = session.query(User).filter(User.id == user_id).first()
+            if not user:
+                return False, 0
+
+            daily_limit = user.get_daily_limit()
+            if daily_limit == -1:  # VIP无限制
+                return True, -1
+
+            # 获取今日使用记录
+            today = date.today()
+            usage = session.query(DailyUsage).filter(
+                DailyUsage.user_id == user_id,
+                DailyUsage.usage_date == today
+            ).first()
+
+            if not usage:
+                return True, daily_limit
+
+            remaining = daily_limit - usage.ai_analysis_time
+            return remaining > 0, max(0, remaining)
+
+        finally:
+            session.close()
+
+    def upgrade_to_vip(self, user_id: int, days: int = 30) -> bool:
+        """
+        升级为VIP会员
+        days: VIP天数，None表示永久
+        """
+        session = self.get_session()
+        try:
+            user = session.query(User).filter(User.id == user_id).first()
+            if not user:
+                return False
+
+            user.membership_type = 'vip'
+            if days:
+                if user.membership_expires and user.membership_expires > datetime.now():
+                    # 如果已有VIP，在现有基础上延长
+                    user.membership_expires += timedelta(days=days)
+                else:
+                    # 新VIP或已过期
+                    user.membership_expires = datetime.now() + timedelta(days=days)
+            else:
+                # 永久VIP
+                user.membership_expires = None
+
+            session.commit()
+            return True
+
+        finally:
+            session.close()
+
+    def get_user_by_id(self, user_id: int) -> User:
+        """通过ID获取用户"""
+        session = self.get_session()
+        try:
+            return session.query(User).filter(User.id == user_id).first()
         finally:
             session.close()
 

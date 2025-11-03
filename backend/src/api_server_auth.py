@@ -23,6 +23,7 @@ sys.path.append('.')
 from main import AILearningCompanion
 from storage.database import db, User
 from auth import create_access_token, get_current_user, decode_access_token, TokenData
+from ai_companion.doubao_api import doubao_client
 
 # 创建FastAPI应用
 app = FastAPI(
@@ -155,10 +156,16 @@ async def login(credentials: UserLogin):
 
 @app.get("/api/auth/me")
 async def get_current_user_info(current_user: TokenData = Depends(get_current_user)):
-    """获取当前用户信息"""
+    """获取当前用户信息（包含会员状态和使用时长）"""
     user = db.get_user_by_username(current_user.username)
     if not user:
         raise HTTPException(status_code=404, detail="用户不存在")
+
+    # 检查使用限制
+    can_use, remaining_time = db.check_usage_limit(user.id)
+
+    # 获取今日使用记录
+    today_usage = db.get_daily_usage(user.id)
 
     return {
         "success": True,
@@ -168,6 +175,13 @@ async def get_current_user_info(current_user: TokenData = Depends(get_current_us
             "email": user.email,
             "full_name": user.full_name,
             "user_type": user.user_type,
+            "membership_type": user.membership_type,
+            "is_vip": user.is_vip(),
+            "membership_expires": user.membership_expires.isoformat() if user.membership_expires else None,
+            "daily_limit": user.get_daily_limit(),
+            "today_usage": today_usage.ai_analysis_time if today_usage else 0,
+            "remaining_time": remaining_time,
+            "can_use": can_use,
             "created_at": user.created_at.isoformat() if user.created_at else None,
             "last_login": user.last_login.isoformat() if user.last_login else None
         }
@@ -242,7 +256,7 @@ async def analyze_frame(
     frame: VisionFrame,
     current_user: TokenData = Depends(get_current_user)
 ):
-    """分析摄像头帧"""
+    """分析摄像头帧（基础分析，不消耗AI时长）"""
     try:
         if current_user.user_id not in companion_systems:
             raise HTTPException(status_code=400, detail="请先开始学习会话")
@@ -254,7 +268,7 @@ async def analyze_frame(
         np_arr = np.frombuffer(img_data, np.uint8)
         img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
 
-        # 处理帧
+        # 处理帧（本地MediaPipe分析，不消耗AI配额）
         result = system.process_frame(img)
 
         # 如果有AI消息，通过WebSocket发送
@@ -270,6 +284,65 @@ async def analyze_frame(
         return {
             "success": True,
             "data": result
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/vision/analyze_advanced")
+async def analyze_frame_advanced(
+    frame: VisionFrame,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """
+    高级AI分析（使用豆包大模型）
+    - 普通会员：每天30分钟
+    - VIP会员：无限制
+    """
+    try:
+        # 检查使用限制
+        can_use, remaining_time = db.check_usage_limit(current_user.user_id)
+
+        if not can_use:
+            raise HTTPException(
+                status_code=403,
+                detail=f"今日AI分析时长已用完。剩余: 0秒。升级VIP可享受无限制使用！"
+            )
+
+        if current_user.user_id not in companion_systems:
+            raise HTTPException(status_code=400, detail="请先开始学习会话")
+
+        # 记录开始时间
+        start_time = datetime.now()
+
+        # 使用豆包API进行深度分析
+        # 1. 分析学习内容
+        content_result = doubao_client.analyze_learning_content(frame.frame_data)
+
+        # 2. 分析姿势和状态
+        state_result = doubao_client.analyze_posture_and_state(frame.frame_data)
+
+        # 记录使用时间（假设每次分析消耗3秒）
+        analysis_duration = 3
+        allowed, new_remaining = db.add_usage_time(current_user.user_id, analysis_duration)
+
+        # 获取用户信息
+        user = db.get_user_by_id(current_user.user_id)
+
+        return {
+            "success": True,
+            "data": {
+                "learning_content": content_result,
+                "posture_and_state": state_result,
+                "usage_info": {
+                    "is_vip": user.is_vip() if user else False,
+                    "today_used": analysis_duration,
+                    "remaining_time": new_remaining,
+                    "can_continue": allowed
+                }
+            }
         }
     except HTTPException:
         raise
@@ -494,6 +567,148 @@ async def parent_page():
     return FileResponse("../../frontend/public/parent_auth.html")
 
 
+# ==================== 会员管理端点 ====================
+
+class UpgradeRequest(BaseModel):
+    """VIP升级请求"""
+    days: int = 30  # VIP天数
+
+
+@app.post("/api/membership/upgrade")
+async def upgrade_to_vip(
+    upgrade_req: UpgradeRequest,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """
+    升级为VIP会员
+    注意：这是演示接口，实际应用需要集成支付系统
+    """
+    try:
+        success = db.upgrade_to_vip(current_user.user_id, upgrade_req.days)
+
+        if success:
+            user = db.get_user_by_id(current_user.user_id)
+            return {
+                "success": True,
+                "message": f"成功升级为VIP会员！有效期：{upgrade_req.days}天",
+                "data": {
+                    "membership_type": user.membership_type,
+                    "membership_expires": user.membership_expires.isoformat() if user.membership_expires else None,
+                    "daily_limit": user.get_daily_limit()
+                }
+            }
+        else:
+            raise HTTPException(status_code=500, detail="升级失败")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/membership/status")
+async def get_membership_status(current_user: TokenData = Depends(get_current_user)):
+    """获取会员状态"""
+    try:
+        user = db.get_user_by_id(current_user.user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="用户不存在")
+
+        # 获取使用统计
+        can_use, remaining = db.check_usage_limit(current_user.user_id)
+        today_usage = db.get_daily_usage(current_user.user_id)
+
+        return {
+            "success": True,
+            "data": {
+                "is_vip": user.is_vip(),
+                "membership_type": user.membership_type,
+                "membership_expires": user.membership_expires.isoformat() if user.membership_expires else None,
+                "daily_limit": user.get_daily_limit(),
+                "today_used": today_usage.ai_analysis_time if today_usage else 0,
+                "remaining_time": remaining,
+                "can_use_ai": can_use,
+                "benefits": {
+                    "free": ["每天30分钟AI分析", "基础学习跟踪", "AI伙伴对话"],
+                    "vip": ["无限AI分析时长", "深度学习内容识别", "智能学习总结", "优先客服支持"]
+                }
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class SummaryRequest(BaseModel):
+    """学习总结请求"""
+    session_id: Optional[str] = None
+
+
+@app.post("/api/learning/generate_summary")
+async def generate_learning_summary(
+    summary_req: SummaryRequest,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """
+    生成学习总结（使用豆包大模型）
+    - 普通会员：消耗5秒AI时长
+    - VIP会员：无限制
+    """
+    try:
+        # 检查使用限制（生成总结消耗5秒）
+        can_use, remaining_time = db.check_usage_limit(current_user.user_id)
+
+        user = db.get_user_by_id(current_user.user_id)
+        if not user.is_vip() and remaining_time < 5:
+            raise HTTPException(
+                status_code=403,
+                detail="AI分析时长不足，无法生成总结。升级VIP可享受无限制使用！"
+            )
+
+        # 获取学习会话数据
+        if current_user.user_id in companion_systems:
+            system = companion_systems[current_user.user_id]
+            session_data = system.get_session_summary()
+        else:
+            # 从数据库获取最近的会话
+            sessions = db.get_user_sessions(current_user.user_id, limit=1)
+            if not sessions:
+                raise HTTPException(status_code=404, detail="没有找到学习会话")
+
+            session = sessions[0]
+            session_data = {
+                "duration": (session.total_time or 0) // 60,
+                "topics": json.loads(session.detected_topics) if session.detected_topics else [],
+                "focus_level": (session.focused_time or 0) / max(session.total_time or 1, 1) * 100,
+                "posture_scores": [75, 80, 85],  # 示例数据
+                "detected_content": "学习内容"
+            }
+
+        # 使用豆包生成总结
+        result = doubao_client.generate_learning_summary(session_data)
+
+        if result.get("success"):
+            # 记录使用时间
+            if not user.is_vip():
+                db.add_usage_time(current_user.user_id, 5)
+
+            return {
+                "success": True,
+                "data": {
+                    "summary": result["summary"],
+                    "session_data": session_data
+                }
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result.get("error", "生成总结失败"))
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ==================== 系统端点 ====================
 
 @app.get("/api/status")
@@ -505,7 +720,13 @@ async def get_status():
             "status": "running",
             "version": "2.0.0",
             "active_sessions": len(companion_systems),
-            "active_connections": len(active_connections)
+            "active_connections": len(active_connections),
+            "features": {
+                "basic_vision_analysis": True,
+                "advanced_ai_analysis": True,
+                "membership_system": True,
+                "doubao_integration": True
+            }
         }
     }
 

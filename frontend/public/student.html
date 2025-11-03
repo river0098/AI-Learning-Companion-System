@@ -41,6 +41,26 @@
             gap: 15px;
         }
 
+        .membership-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            background: rgba(255,215,0,0.3);
+            border: 1px solid rgba(255,215,0,0.5);
+        }
+
+        .membership-badge.vip {
+            background: rgba(255,215,0,0.5);
+            border: 1px solid rgba(255,215,0,0.8);
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(255,215,0,0.5); }
+            50% { box-shadow: 0 0 20px rgba(255,215,0,0.8); }
+        }
+
         .btn-logout {
             padding: 8px 16px;
             background: rgba(255,255,255,0.2);
@@ -130,6 +150,18 @@
         .btn-danger {
             background: #ef4444;
             color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #333;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(255,215,0,0.3);
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,215,0,0.5);
         }
 
         .btn:disabled {
@@ -299,6 +331,7 @@
             <h1>🎓 AI陪伴学习系统</h1>
             <div class="user-info">
                 <span id="userName">加载中...</span>
+                <span class="membership-badge" id="membershipBadge">普通会员</span>
                 <button class="btn-logout" onclick="logout()">退出登录</button>
             </div>
         </div>
@@ -406,6 +439,27 @@
                         </div>
                     </div>
 
+                    <!-- AI使用时长 -->
+                    <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); border-radius: 10px;">
+                        <h3 style="margin-bottom: 10px; color: #667eea;">⚡ AI分析配额</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span>今日已用：</span>
+                            <strong id="todayUsedTime">0秒</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span>剩余时长：</span>
+                            <strong id="remainingTime" style="color: #667eea;">1800秒</strong>
+                        </div>
+                        <div style="width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden;">
+                            <div id="usageBar" style="height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); width: 0%; transition: width 0.3s;"></div>
+                        </div>
+                        <div id="vipUpgradeSection" class="hidden" style="margin-top: 15px;">
+                            <button class="btn btn-warning" style="width: 100%;" onclick="upgradeToVIP()">
+                                ⭐ 升级VIP - 无限使用
+                            </button>
+                        </div>
+                    </div>
+
                     <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="refreshDashboard()">
                         刷新数据
                     </button>
@@ -430,6 +484,100 @@
 
         // 加载用户信息
         document.getElementById('userName').textContent = user.full_name || user.username;
+
+        // 加载会员状态
+        async function loadMembershipStatus() {
+            try {
+                const response = await fetch('/api/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const data = result.data;
+
+                    // 更新会员徽章
+                    const badge = document.getElementById('membershipBadge');
+                    if (data.is_vip) {
+                        badge.textContent = '⭐ VIP会员';
+                        badge.classList.add('vip');
+                    } else {
+                        badge.textContent = '普通会员';
+                        badge.classList.remove('vip');
+                    }
+
+                    // 更新AI使用配额显示
+                    updateUsageDisplay(data);
+                }
+            } catch (error) {
+                console.error('加载会员状态失败:', error);
+            }
+        }
+
+        // 更新使用配额显示
+        function updateUsageDisplay(data) {
+            const todayUsed = data.today_usage || 0;
+            const remaining = data.remaining_time;
+            const dailyLimit = data.daily_limit;
+
+            document.getElementById('todayUsedTime').textContent =
+                data.is_vip ? '无限制' : `${todayUsed}秒`;
+
+            if (data.is_vip) {
+                document.getElementById('remainingTime').textContent = '∞ 无限制';
+                document.getElementById('usageBar').style.width = '100%';
+                document.getElementById('vipUpgradeSection').classList.add('hidden');
+            } else {
+                const minutes = Math.floor(remaining / 60);
+                const seconds = remaining % 60;
+                document.getElementById('remainingTime').textContent =
+                    `${minutes}分${seconds}秒`;
+
+                const usagePercent = ((dailyLimit - remaining) / dailyLimit) * 100;
+                document.getElementById('usageBar').style.width = usagePercent + '%';
+
+                // 如果剩余时间少于5分钟，显示升级按钮
+                if (remaining < 300) {
+                    document.getElementById('vipUpgradeSection').classList.remove('hidden');
+                }
+            }
+        }
+
+        // VIP升级
+        async function upgradeToVIP() {
+            if (!confirm('升级为VIP会员？\n\n您将享受：\n✓ 无限AI分析时长\n✓ 深度学习内容识别\n✓ 智能学习总结\n✓ 优先客服支持\n\n注意：这是演示功能，实际应用需要支付系统')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/membership/upgrade', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ days: 30 })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('🎉 ' + result.message);
+                    loadMembershipStatus();  // 重新加载状态
+                } else {
+                    alert('升级失败：' + (result.detail || '未知错误'));
+                }
+            } catch (error) {
+                console.error('VIP升级失败:', error);
+                alert('升级失败，请稍后重试');
+            }
+        }
+
+        // 页面加载时获取会员状态
+        loadMembershipStatus();
 
         // 退出登录
         function logout() {
