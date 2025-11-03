@@ -478,6 +478,55 @@ async def get_auth_accounts(current_user: TokenData = Depends(get_current_user))
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/auth/security-status")
+async def get_security_status(current_user: TokenData = Depends(get_current_user)):
+    """获取账号安全状态"""
+    try:
+        accounts = get_user_auth_accounts(current_user.user_id)
+
+        has_phone = any(a['auth_type'] == 'phone' for a in accounts)
+        has_email = any(a['auth_type'] == 'email' for a in accounts)
+        has_wechat = any(a['auth_type'] in ['wechat_h5', 'wechat_mini'] for a in accounts)
+
+        # 计算安全分数
+        score = 0
+        if has_phone:
+            score += 35
+        if has_email:
+            score += 30
+        if has_wechat:
+            score += 15
+        if len(accounts) >= 2:
+            score += 15
+        if len(accounts) >= 3:
+            score += 5
+
+        # 生成建议
+        recommendations = []
+        if not has_phone:
+            recommendations.append("绑定手机号以提升账号安全性")
+        if not has_email:
+            recommendations.append("绑定邮箱以便找回密码")
+        if len(accounts) < 2:
+            recommendations.append("建议至少绑定两种登录方式")
+        if score >= 80:
+            recommendations.append("您的账号安全性很好，请继续保持")
+
+        return {
+            "success": True,
+            "data": {
+                "security_score": min(score, 100),
+                "has_phone": has_phone,
+                "has_email": has_email,
+                "has_wechat": has_wechat,
+                "linked_accounts_count": len(accounts),
+                "recommendations": recommendations
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/auth/me")
 async def get_current_user_info(current_user: TokenData = Depends(get_current_user)):
     """获取当前用户信息（包含会员状态和使用时长）"""
@@ -879,8 +928,8 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
 
 @app.get("/", response_class=FileResponse)
 async def index():
-    """返回统一登录页面"""
-    return FileResponse("../../frontend/public/login_unified.html")
+    """返回现代化登录页面"""
+    return FileResponse("../../frontend/public/login_modern.html")
 
 
 @app.get("/login", response_class=FileResponse)
@@ -903,8 +952,8 @@ async def parent_page():
 
 @app.get("/account-settings", response_class=FileResponse)
 async def account_settings_page():
-    """账号设置页面"""
-    return FileResponse("../../frontend/public/account_settings.html")
+    """账号设置页面（现代化版本）"""
+    return FileResponse("../../frontend/public/account_settings_modern.html")
 
 
 # ==================== 会员管理端点 ====================
