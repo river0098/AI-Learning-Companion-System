@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主控台 - AI陪伴学习系统</title>
+    <link rel="stylesheet" href="/styles/design-system-enhanced.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradient-shift 15s ease infinite;
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+        }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* 顶部导航栏 */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 16px 0;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .navbar-menu {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-item {
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover {
+            background: var(--gray-100);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .btn-logout {
+            padding: 8px 20px;
+            background: transparent;
+            border: 2px solid var(--primary-start);
+            color: var(--primary-start);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: var(--primary-gradient);
+            color: white;
+            border-color: transparent;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 32px;
+        }
+
+        .welcome-section {
+            text-align: center;
+            color: white;
+            margin-bottom: 60px;
+        }
+
+        .welcome-title {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .welcome-subtitle {
+            font-size: 20px;
+            opacity: 0.95;
+            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 功能卡片网格 */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .feature-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+
+        .feature-icon.secondary {
+            background: var(--secondary-gradient);
+        }
+
+        .feature-icon.success {
+            background: var(--success-gradient);
+        }
+
+        .feature-icon.warning {
+            background: var(--warning-gradient);
+        }
+
+        .feature-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .feature-description {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .feature-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary-start);
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .feature-badge.vip {
+            background: var(--vip-gradient);
+            color: var(--gray-900);
+        }
+
+        /* 快速操作按钮 */
+        .quick-actions {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+
+        .quick-btn {
+            flex: 1;
+            min-width: 200px;
+            padding: 20px 32px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .quick-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .quick-btn.primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .navbar-menu {
+                display: none;
+            }
+
+            .welcome-title {
+                font-size: 32px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-actions {
+                flex-direction: column;
+            }
+
+            .quick-btn {
+                min-width: 100%;
+            }
+        }
+
+        /* Loading遮罩 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(102, 126, 234, 0.2);
+            border-top-color: var(--primary-start);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">
+                <span>🎓</span>
+                <span>AI陪伴学习系统</span>
+            </div>
+
+            <div class="navbar-menu">
+                <a href="/dashboard" class="nav-item">主页</a>
+                <a href="/student" class="nav-item">学习中心</a>
+                <a href="/account-settings" class="nav-item">账号设置</a>
+            </div>
+
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">U</div>
+                <button class="btn-logout" onclick="handleLogout()">退出登录</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <!-- 欢迎区域 -->
+        <div class="welcome-section">
+            <h1 class="welcome-title">欢迎回来，<span id="userName">学生</span>！</h1>
+            <p class="welcome-subtitle">选择下方功能开始您的智能学习之旅</p>
+        </div>
+
+        <!-- 快速操作 -->
+        <div class="quick-actions">
+            <button class="quick-btn primary" onclick="location.href='/student'">
+                🚀 开始学习
+            </button>
+            <button class="quick-btn" onclick="location.href='/account-settings'">
+                ⚙️ 账号设置
+            </button>
+            <button class="quick-btn" onclick="loadDashboard()">
+                📊 学习报告
+            </button>
+        </div>
+
+        <!-- 功能卡片 -->
+        <div class="features-grid">
+            <!-- 学习中心 -->
+            <a href="/student" class="feature-card">
+                <div class="feature-icon">📚</div>
+                <h3 class="feature-title">学习中心</h3>
+                <p class="feature-description">
+                    开启AI陪伴学习，实时监测学习状态，智能分析学习内容，获得个性化建议。
+                </p>
+                <span class="feature-badge">🔥 核心功能</span>
+            </a>
+
+            <!-- 账号设置 -->
+            <a href="/account-settings" class="feature-card">
+                <div class="feature-icon secondary">🔐</div>
+                <h3 class="feature-title">账号设置</h3>
+                <p class="feature-description">
+                    管理登录方式，绑定手机号、邮箱、微信等，提升账号安全性，查看安全分数。
+                </p>
+                <span class="feature-badge">安全分数: <span id="securityScore">--</span>/100</span>
+            </a>
+
+            <!-- VIP会员 -->
+            <a href="#" onclick="showVIPModal(); return false;" class="feature-card">
+                <div class="feature-icon warning">👑</div>
+                <h3 class="feature-title">VIP会员</h3>
+                <p class="feature-description">
+                    升级VIP享受无限AI分析时长，深度学习内容识别，智能总结，优先支持。
+                </p>
+                <span class="feature-badge vip">💎 升级VIP</span>
+            </a>
+
+            <!-- 学习报告 -->
+            <a href="#" onclick="showComingSoon('学习报告'); return false;" class="feature-card">
+                <div class="feature-icon success">📈</div>
+                <h3 class="feature-title">学习报告</h3>
+                <p class="feature-description">
+                    查看学习时长统计、专注度分析、学习趋势图表，全面了解学习情况。
+                </p>
+                <span class="feature-badge">即将推出</span>
+            </a>
+
+            <!-- 知识图谱 -->
+            <a href="#" onclick="showComingSoon('知识图谱'); return false;" class="feature-card">
+                <div class="feature-icon">🧠</div>
+                <h3 class="feature-title">知识图谱</h3>
+                <p class="feature-description">
+                    可视化展示知识点掌握情况，追踪学习路径，发现知识盲点，智能推荐。
+                </p>
+                <span class="feature-badge">即将推出</span>
+            </a>
+
+            <!-- AI伙伴 -->
+            <a href="#" onclick="showComingSoon('AI伙伴'); return false;" class="feature-card">
+                <div class="feature-icon secondary">🤖</div>
+                <h3 class="feature-title">AI伙伴</h3>
+                <p class="feature-description">
+                    AI助教、教练、朋友三种模式，提供学习辅导、鼓励支持、情感陪伴。
+                </p>
+                <span class="feature-badge">即将推出</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Loading遮罩 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loader"></div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+
+        // 页面加载
+        window.onload = () => {
+            if (!token) {
+                window.location.href = '/';
+                return;
+            }
+            loadUserInfo();
+            loadSecurityScore();
+        };
+
+        // 加载用户信息
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/auth/me', {
+                    headers: {'Authorization': `Bearer ${token}`}
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const user = result.data;
+                    document.getElementById('userName').textContent = user.full_name || user.username || '学生';
+                    const avatar = (user.full_name || user.username || 'U').charAt(0).toUpperCase();
+                    document.getElementById('userAvatar').textContent = avatar;
+                } else {
+                    console.error('加载用户信息失败');
+                }
+            } catch (error) {
+                console.error('加载用户信息错误:', error);
+            }
+        }
+
+        // 加载安全分数
+        async function loadSecurityScore() {
+            try {
+                const response = await fetch('/api/auth/security-status', {
+                    headers: {'Authorization': `Bearer ${token}`}
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('securityScore').textContent = result.data.security_score;
+                }
+            } catch (error) {
+                console.error('加载安全分数错误:', error);
+            }
+        }
+
+        // 登出
+        function handleLogout() {
+            if (confirm('确定要退出登录吗？')) {
+                localStorage.clear();
+                window.location.href = '/';
+            }
+        }
+
+        // 显示VIP弹窗
+        function showVIPModal() {
+            alert('VIP会员功能正在开发中...\n\n升级VIP可享受：\n• 无限AI分析时长\n• 深度学习内容识别\n• 智能学习总结\n• 优先客服支持');
+        }
+
+        // 即将推出提示
+        function showComingSoon(feature) {
+            alert(`${feature}功能即将推出，敬请期待！`);
+        }
+
+        // 加载仪表板数据
+        async function loadDashboard() {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.classList.add('active');
+
+            try {
+                const response = await fetch('/api/dashboard/student', {
+                    headers: {'Authorization': `Bearer ${token}`}
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // 显示仪表板数据
+                    alert('学习数据加载成功！\n\n今日学习: ' + (result.data.today_minutes || 0) + '分钟\n本周学习: ' + (result.data.week_minutes || 0) + '分钟');
+                } else {
+                    alert('加载失败: ' + (result.message || '未知错误'));
+                }
+            } catch (error) {
+                console.error('加载仪表板错误:', error);
+                alert('网络错误，请稍后重试');
+            } finally {
+                overlay.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -796,7 +796,7 @@
                     showMessage('success', '登录成功！正在跳转...');
 
                     setTimeout(() => {
-                        window.location.href = '/student';
+                        window.location.href = '/dashboard';
                     }, 1000);
                 } else {
                     showMessage('error', result.detail || '登录失败');
@@ -825,7 +825,7 @@
             showMessage('success', '登录成功！正在跳转...');
 
             setTimeout(() => {
-                window.location.href = '/student';
+                window.location.href = '/dashboard';
             }, 1000);
         }
 
@@ -860,7 +860,7 @@
         window.onload = () => {
             const token = localStorage.getItem('token');
             if (token) {
-                window.location.href = '/student';
+                window.location.href = '/dashboard';
             }
         };
     </script>

@@ -48,6 +48,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 静态文件服务 - 必须在路由之前配置
+app.mount("/styles", StaticFiles(directory="../../frontend/public/styles"), name="styles")
+app.mount("/js", StaticFiles(directory="../../frontend/public/js"), name="js")
+app.mount("/assets", StaticFiles(directory="../../frontend/public/assets"), name="assets")
+
 # 全局系统实例
 companion_systems: Dict[int, AILearningCompanion] = {}  # user_id -> system
 active_connections: Dict[int, WebSocket] = {}  # user_id -> websocket
@@ -954,6 +959,12 @@ async def parent_page():
 async def account_settings_page():
     """账号设置页面（现代化版本）"""
     return FileResponse("../../frontend/public/account_settings_modern.html")
+
+
+@app.get("/dashboard", response_class=FileResponse)
+async def dashboard_page():
+    """统一导航仪表板"""
+    return FileResponse("../../frontend/public/dashboard.html")
 
 
 # ==================== 会员管理端点 ====================
