@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI陪伴学习系统 - 启动引导</title>
+    <link rel="stylesheet" href="/styles/design-system-enhanced.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradient-shift 15s ease infinite;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .start-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .steps-container {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .step-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .step-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .step-card.completed {
+            background: linear-gradient(135deg, rgba(17, 153, 142, 0.1) 0%, rgba(56, 239, 125, 0.1) 100%);
+            border: 2px solid #11998e;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .step-card.completed .step-number {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .step-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #1a202c;
+            margin: 0;
+        }
+
+        .step-content {
+            margin-left: 66px;
+        }
+
+        .step-description {
+            color: #4a5568;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .command-box {
+            background: #1a202c;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            position: relative;
+            font-family: 'Courier New', monospace;
+        }
+
+        .command-box code {
+            color: #48bb78;
+            display: block;
+            overflow-x: auto;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .copy-btn.copied {
+            background: #48bb78;
+            border-color: #48bb78;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary, .btn-secondary, .btn-success {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #f7fafc;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: rgba(237, 137, 54, 0.1);
+            color: #dd6b20;
+        }
+
+        .status-running {
+            background: rgba(49, 130, 206, 0.1);
+            color: #3182ce;
+        }
+
+        .status-success {
+            background: rgba(72, 187, 120, 0.1);
+            color: #38a169;
+        }
+
+        .pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .quick-links {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .quick-links h3 {
+            margin-top: 0;
+            color: #1a202c;
+            font-size: 1.4rem;
+        }
+
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .link-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #1a202c;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .link-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .link-icon {
+            font-size: 1.5rem;
+        }
+
+        .link-text {
+            font-weight: 600;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .alert-info {
+            background: rgba(49, 130, 206, 0.1);
+            border-left: 4px solid #3182ce;
+            color: #2c5282;
+        }
+
+        .alert-success {
+            background: rgba(72, 187, 120, 0.1);
+            border-left: 4px solid #38a169;
+            color: #22543d;
+        }
+
+        .alert-warning {
+            background: rgba(237, 137, 54, 0.1);
+            border-left: 4px solid #dd6b20;
+            color: #7c2d12;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 3rem;
+            opacity: 0.9;
+        }
+
+        .test-accounts {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .test-accounts h4 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .account-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-top: 0.5rem;
+            font-family: 'Courier New', monospace;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="start-container">
+        <div class="header">
+            <h1>🚀 AI陪伴学习系统</h1>
+            <p>快速启动引导 - 3步开始使用</p>
+        </div>
+
+        <!-- 步骤1: 安装依赖 -->
+        <div class="step-card" id="step1">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <div>
+                    <h2 class="step-title">安装依赖包</h2>
+                    <span class="status-indicator status-pending" id="status1">
+                        <span class="pulse"></span>
+                        等待执行
+                    </span>
+                </div>
+            </div>
+            <div class="step-content">
+                <p class="step-description">
+                    只需要3个Python包，安装非常快速（约30秒）。
+                </p>
+
+                <div class="command-box">
+                    <button class="copy-btn" onclick="copyCommand('cmd1')">复制</button>
+                    <code id="cmd1">pip3 install fastapi "uvicorn[standard]" pydantic</code>
+                </div>
+
+                <div class="alert alert-info">
+                    <span>💡</span>
+                    <div>
+                        <strong>提示：</strong> 如果已经安装过这些包，可以直接跳过此步骤。
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn-primary" onclick="markCompleted('step1')">
+                        ✓ 标记为已完成
+                    </button>
+                    <button class="btn-secondary" onclick="checkDependencies()">
+                        🔍 检查是否已安装
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 步骤2: 启动服务器 -->
+        <div class="step-card" id="step2">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <div>
+                    <h2 class="step-title">启动服务器</h2>
+                    <span class="status-indicator status-pending" id="status2">
+                        <span class="pulse"></span>
+                        等待执行
+                    </span>
+                </div>
+            </div>
+            <div class="step-content">
+                <p class="step-description">
+                    进入项目目录并启动简化版服务器。
+                </p>
+
+                <div class="command-box">
+                    <button class="copy-btn" onclick="copyCommand('cmd2')">复制</button>
+                    <code id="cmd2">cd backend/src && python3 api_server_simple.py</code>
+                </div>
+
+                <div class="alert alert-success" style="display: none;" id="server-success">
+                    <span>✅</span>
+                    <div>
+                        <strong>服务器已启动！</strong> 看到启动信息后进行下一步。
+                    </div>
+                </div>
+
+                <div class="alert alert-warning">
+                    <span>⚠️</span>
+                    <div>
+                        <strong>重要：</strong> 保持此终端窗口打开，服务器需要持续运行。
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn-primary" onclick="markCompleted('step2')">
+                        ✓ 服务器已启动
+                    </button>
+                    <button class="btn-secondary" onclick="testServer()">
+                        🔍 测试服务器状态
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 步骤3: 访问网页 -->
+        <div class="step-card" id="step3">
+            <div class="step-header">
+                <div class="step-number">3</div>
+                <div>
+                    <h2 class="step-title">访问系统</h2>
+                    <span class="status-indicator status-pending" id="status3">
+                        <span class="pulse"></span>
+                        等待执行
+                    </span>
+                </div>
+            </div>
+            <div class="step-content">
+                <p class="step-description">
+                    在浏览器中打开系统，开始使用！
+                </p>
+
+                <div class="action-buttons">
+                    <button class="btn-success" onclick="openSystem()">
+                        🌐 打开登录页面
+                    </button>
+                    <button class="btn-secondary" onclick="openDocs()">
+                        📖 查看API文档
+                    </button>
+                </div>
+
+                <div class="test-accounts">
+                    <h4>🔑 测试账号</h4>
+                    <div class="account-info">
+                        <div><strong>手机号登录：</strong></div>
+                        <div>手机号: 13800138000</div>
+                        <div>验证码: 123456</div>
+                    </div>
+                    <div class="account-info" style="margin-top: 0.5rem;">
+                        <div><strong>邮箱登录：</strong></div>
+                        <div>邮箱: test@example.com</div>
+                        <div>密码: password123</div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info" style="margin-top: 1rem;">
+                    <span>💡</span>
+                    <div>
+                        <strong>提示：</strong> 登录后会自动跳转到主控台，可以浏览所有功能。
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快速链接 -->
+        <div class="quick-links">
+            <h3>📚 快速访问</h3>
+            <div class="links-grid">
+                <a href="http://localhost:8000" target="_blank" class="link-card">
+                    <span class="link-icon">🏠</span>
+                    <span class="link-text">登录页面</span>
+                </a>
+                <a href="http://localhost:8000/dashboard" target="_blank" class="link-card">
+                    <span class="link-icon">📊</span>
+                    <span class="link-text">主控台</span>
+                </a>
+                <a href="http://localhost:8000/student" target="_blank" class="link-card">
+                    <span class="link-icon">📚</span>
+                    <span class="link-text">学习中心</span>
+                </a>
+                <a href="http://localhost:8000/account-settings" target="_blank" class="link-card">
+                    <span class="link-icon">⚙️</span>
+                    <span class="link-text">账号设置</span>
+                </a>
+                <a href="http://localhost:8000/docs" target="_blank" class="link-card">
+                    <span class="link-icon">📖</span>
+                    <span class="link-text">API文档</span>
+                </a>
+                <a href="http://localhost:8000/api/status" target="_blank" class="link-card">
+                    <span class="link-icon">🔍</span>
+                    <span class="link-text">系统状态</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>✨ AI陪伴学习系统 v2.0.0</p>
+            <p>📝 查看完整文档: README_快速开始.md</p>
+        </div>
+    </div>
+
+    <script>
+        // 复制命令到剪贴板
+        function copyCommand(id) {
+            const code = document.getElementById(id);
+            const text = code.textContent;
+
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = code.parentElement.querySelector('.copy-btn');
+                btn.textContent = '✓ 已复制';
+                btn.classList.add('copied');
+
+                setTimeout(() => {
+                    btn.textContent = '复制';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // 标记步骤为已完成
+        function markCompleted(stepId) {
+            const step = document.getElementById(stepId);
+            step.classList.add('completed');
+
+            const stepNum = stepId.replace('step', '');
+            const status = document.getElementById('status' + stepNum);
+            status.className = 'status-indicator status-success';
+            status.innerHTML = '<span>✓</span> 已完成';
+
+            // 自动展开下一步
+            const nextStep = parseInt(stepNum) + 1;
+            if (nextStep <= 3) {
+                const nextStatus = document.getElementById('status' + nextStep);
+                nextStatus.className = 'status-indicator status-running';
+                nextStatus.innerHTML = '<span class="pulse"></span> 进行中';
+            }
+
+            // 保存进度
+            localStorage.setItem('step' + stepNum, 'completed');
+        }
+
+        // 检查依赖是否已安装
+        function checkDependencies() {
+            alert('请在终端运行以下命令检查:\n\npython3 -c "import fastapi; import uvicorn; import pydantic; print(\'✅ 所有依赖已安装\')"');
+        }
+
+        // 测试服务器状态
+        async function testServer() {
+            try {
+                const response = await fetch('http://localhost:8000/api/status');
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('server-success').style.display = 'flex';
+                    alert('✅ 服务器运行正常！\n\n状态: ' + data.data.status + '\n版本: ' + data.data.version);
+                    markCompleted('step2');
+                }
+            } catch (error) {
+                alert('❌ 无法连接到服务器\n\n请确认:\n1. 服务器已启动\n2. 使用的端口是8000\n3. 没有防火墙阻止\n\n错误: ' + error.message);
+            }
+        }
+
+        // 打开系统
+        function openSystem() {
+            window.open('http://localhost:8000', '_blank');
+            setTimeout(() => {
+                const confirm = window.confirm('页面是否正常打开？\n\n如果看到登录页面，点击"确定"标记为完成。');
+                if (confirm) {
+                    markCompleted('step3');
+                }
+            }, 2000);
+        }
+
+        // 打开API文档
+        function openDocs() {
+            window.open('http://localhost:8000/docs', '_blank');
+        }
+
+        // 页面加载时恢复进度
+        window.onload = () => {
+            for (let i = 1; i <= 3; i++) {
+                if (localStorage.getItem('step' + i) === 'completed') {
+                    markCompleted('step' + i);
+                }
+            }
+        };
+
+        // 添加键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + 数字键快速标记完成
+            if ((e.ctrlKey || e.metaKey) && e.key >= '1' && e.key <= '3') {
+                e.preventDefault();
+                markCompleted('step' + e.key);
+            }
+        });
+    </script>
+</body>
+</html>
