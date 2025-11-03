@@ -1,0 +1,25 @@
+# 最小化依赖 - 仅用于启动Web服务器测试
+
+# Web Framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+websockets>=11.0
+pydantic>=2.0.0
+python-multipart>=0.0.6
+
+# Authentication
+pyjwt>=2.8.0
+passlib[bcrypt]>=1.7.4
+
+# Database
+sqlalchemy>=2.0.0
+
+# Utilities
+python-dotenv>=1.0.0
+requests>=2.31.0
+
+# Optional (可选，用于增强功能)
+# redis>=5.0.0
+# phonenumbers>=8.13.0
+# opencv-python>=4.8.0
+# mediapipe>=0.10.0
