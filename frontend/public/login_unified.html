@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - AI陪伴学习系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            max-width: 900px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .left-panel {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .left-panel h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        .left-panel p {
+            font-size: 1.1em;
+            line-height: 1.6;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+
+        .features {
+            list-style: none;
+            margin-top: 30px;
+        }
+
+        .features li {
+            margin: 15px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .features li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            background: rgba(255,255,255,0.2);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .right-panel {
+            padding: 60px 40px;
+            overflow-y: auto;
+            max-height: 700px;
+        }
+
+        .form-container {
+            max-width: 350px;
+            margin: 0 auto;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 0.95em;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .form {
+            display: none;
+        }
+
+        .form.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-group input {
+            flex: 1;
+        }
+
+        .input-group button {
+            flex-shrink: 0;
+            padding: 12px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .input-group button:hover {
+            background: #5568d3;
+        }
+
+        .input-group button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-wechat {
+            background: #07c160;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-wechat:hover {
+            background: #06ad56;
+            box-shadow: 0 5px 15px rgba(7, 193, 96, 0.4);
+        }
+
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            color: #999;
+            position: relative;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: #e0e0e0;
+        }
+
+        .divider::before {
+            left: 0;
+        }
+
+        .divider::after {
+            right: 0;
+        }
+
+        .error-message {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message {
+            background: #efe;
+            border: 1px solid #cfc;
+            color: #3c3;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .link-text {
+            text-align: center;
+            margin-top: 15px;
+            color: #666;
+        }
+
+        .link-text a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .link-text a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .left-panel {
+                display: none;
+            }
+
+            .tabs {
+                gap: 10px;
+                font-size: 0.85em;
+            }
+
+            .tab {
+                padding: 6px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <h1>🎓 AI陪伴学习</h1>
+            <p>将传统监督转变为智能陪伴<br>用同理心赋能学习</p>
+
+            <ul class="features">
+                <li>智能视觉分析，了解学习状态</li>
+                <li>情感AI伙伴，三种模式陪伴</li>
+                <li>知识图谱追踪，个性化学习路径</li>
+                <li>多种登录方式，便捷安全</li>
+            </ul>
+        </div>
+
+        <div class="right-panel">
+            <div class="form-container">
+                <!-- 标签切换 -->
+                <div class="tabs">
+                    <div class="tab active" onclick="showLoginMethod('phone')">手机号</div>
+                    <div class="tab" onclick="showLoginMethod('email')">邮箱</div>
+                    <div class="tab" onclick="showLoginMethod('username')">用户名</div>
+                    <div class="tab" onclick="showLoginMethod('wechat')">微信</div>
+                </div>
+
+                <!-- 错误/成功消息 -->
+                <div class="error-message" id="errorMessage"></div>
+                <div class="success-message" id="successMessage"></div>
+
+                <!-- 手机号登录 -->
+                <div class="form active" id="phoneForm">
+                    <h2 style="margin-bottom: 20px; color: #333;">手机号登录</h2>
+
+                    <div class="form-group">
+                        <label>手机号</label>
+                        <input type="tel" id="phoneNumber" placeholder="请输入手机号" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>验证码</label>
+                        <div class="input-group">
+                            <input type="text" id="phoneCode" placeholder="请输入验证码" required>
+                            <button id="phoneSendBtn" onclick="sendSMS('phone')">发送验证码</button>
+                        </div>
+                    </div>
+
+                    <button class="btn" onclick="handlePhoneLogin()">登录</button>
+
+                    <p class="link-text">没有账号？首次使用自动注册</p>
+                </div>
+
+                <!-- 邮箱登录/注册 -->
+                <div class="form" id="emailForm">
+                    <h2 style="margin-bottom: 20px; color: #333;">邮箱登录</h2>
+
+                    <div class="tabs" style="margin-bottom: 20px;">
+                        <div class="tab active" onclick="showEmailMode('login')">登录</div>
+                        <div class="tab" onclick="showEmailMode('register')">注册</div>
+                    </div>
+
+                    <!-- 邮箱登录 -->
+                    <div id="emailLoginMode">
+                        <div class="form-group">
+                            <label>邮箱</label>
+                            <input type="email" id="emailLoginAddress" placeholder="请输入邮箱" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>密码</label>
+                            <input type="password" id="emailLoginPassword" placeholder="请输入密码" required>
+                        </div>
+
+                        <button class="btn" onclick="handleEmailLogin()">登录</button>
+                    </div>
+
+                    <!-- 邮箱注册 -->
+                    <div id="emailRegisterMode" style="display: none;">
+                        <div class="form-group">
+                            <label>邮箱</label>
+                            <input type="email" id="emailRegisterAddress" placeholder="请输入邮箱" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>密码</label>
+                            <input type="password" id="emailRegisterPassword" placeholder="请输入密码（至少6位）" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>确认密码</label>
+                            <input type="password" id="emailRegisterPasswordConfirm" placeholder="请再次输入密码" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>昵称（可选）</label>
+                            <input type="text" id="emailRegisterNickname" placeholder="请输入昵称">
+                        </div>
+
+                        <button class="btn" onclick="handleEmailRegister()">注册</button>
+                    </div>
+                </div>
+
+                <!-- 用户名登录（兼容旧系统） -->
+                <div class="form" id="usernameForm">
+                    <h2 style="margin-bottom: 30px; color: #333;">用户名登录</h2>
+
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" id="loginUsername" placeholder="请输入用户名" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input type="password" id="loginPassword" placeholder="请输入密码" required>
+                    </div>
+
+                    <button class="btn" onclick="handleUsernameLogin()">登录</button>
+
+                    <p class="link-text">
+                        没有账号？<a href="#" onclick="showRegisterForm(); return false;">立即注册</a>
+                    </p>
+                </div>
+
+                <!-- 微信登录 -->
+                <div class="form" id="wechatForm">
+                    <h2 style="margin-bottom: 30px; color: #333;">微信登录</h2>
+
+                    <button class="btn btn-wechat" onclick="handleWeChatLogin()">
+                        <span>🔐</span>
+                        <span>使用微信登录</span>
+                    </button>
+
+                    <div class="divider">或</div>
+
+                    <button class="btn btn-wechat" onclick="handleWeChatMiniLogin()">
+                        <span>📱</span>
+                        <span>微信小程序登录</span>
+                    </button>
+
+                    <p class="link-text" style="margin-top: 20px; font-size: 0.9em; color: #999;">
+                        首次使用将自动创建账号
+                    </p>
+                </div>
+
+                <!-- 旧版注册表单（用户名方式） -->
+                <div class="form" id="registerForm" style="display: none;">
+                    <h2 style="margin-bottom: 30px; color: #333;">创建账户</h2>
+
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" id="registerUsername" placeholder="请输入用户名" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>邮箱</label>
+                        <input type="email" id="registerEmail" placeholder="请输入邮箱" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input type="password" id="registerPassword" placeholder="请输入密码（至少6位）" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>确认密码</label>
+                        <input type="password" id="registerPasswordConfirm" placeholder="请再次输入密码" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>姓名</label>
+                        <input type="text" id="registerFullName" placeholder="请输入真实姓名">
+                    </div>
+
+                    <div class="form-group">
+                        <label>用户类型</label>
+                        <select id="registerUserType">
+                            <option value="student">学生</option>
+                            <option value="parent">家长</option>
+                        </select>
+                    </div>
+
+                    <button class="btn" onclick="handleRegister()">注册</button>
+
+                    <p class="link-text">
+                        已有账号？<a href="#" onclick="showLoginMethod('username'); return false;">立即登录</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let smsCountdown = 0;
+        let smsTimer = null;
+
+        // 切换登录方式
+        function showLoginMethod(method) {
+            // 更新标签样式
+            document.querySelectorAll('.tabs > .tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // 隐藏所有表单
+            document.querySelectorAll('.form').forEach(f => f.classList.remove('active'));
+
+            // 显示对应表单
+            const formId = method + 'Form';
+            document.getElementById(formId).classList.add('active');
+
+            // 清除消息
+            hideMessages();
+        }
+
+        // 切换邮箱登录/注册模式
+        function showEmailMode(mode) {
+            // 更新标签
+            document.querySelectorAll('#emailForm .tabs .tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // 切换显示
+            if (mode === 'login') {
+                document.getElementById('emailLoginMode').style.display = 'block';
+                document.getElementById('emailRegisterMode').style.display = 'none';
+            } else {
+                document.getElementById('emailLoginMode').style.display = 'none';
+                document.getElementById('emailRegisterMode').style.display = 'block';
+            }
+        }
+
+        // 显示旧版注册表单
+        function showRegisterForm() {
+            document.querySelectorAll('.form').forEach(f => f.classList.remove('active'));
+            document.getElementById('registerForm').style.display = 'block';
+            document.getElementById('registerForm').classList.add('active');
+        }
+
+        // 发送短信验证码
+        async function sendSMS(purpose = 'login') {
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+
+            if (!phoneNumber) {
+                showError('请输入手机号');
+                return;
+            }
+
+            if (!/^1[3-9]\d{9}$/.test(phoneNumber)) {
+                showError('请输入正确的手机号');
+                return;
+            }
+
+            const btn = document.getElementById('phoneSendBtn');
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/auth/sms/send', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ phone_number: phoneNumber, purpose })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showSuccess('验证码已发送');
+
+                    // 启动倒计时
+                    smsCountdown = 60;
+                    updateSMSButton(btn);
+                } else {
+                    showError(result.message || '发送失败');
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                console.error('发送验证码错误:', error);
+                showError('网络错误，请稍后重试');
+                btn.disabled = false;
+            }
+        }
+
+        // 更新短信按钮
+        function updateSMSButton(btn) {
+            if (smsCountdown > 0) {
+                btn.textContent = `${smsCountdown}秒后重发`;
+                smsCountdown--;
+                smsTimer = setTimeout(() => updateSMSButton(btn), 1000);
+            } else {
+                btn.textContent = '发送验证码';
+                btn.disabled = false;
+                clearTimeout(smsTimer);
+            }
+        }
+
+        // 手机号登录
+        async function handlePhoneLogin() {
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            const code = document.getElementById('phoneCode').value.trim();
+
+            if (!phoneNumber || !code) {
+                showError('请填写手机号和验证码');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/login/phone', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ phone_number: phoneNumber, code })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    handleLoginSuccess(result.data);
+                } else {
+                    showError(result.message || '登录失败');
+                }
+            } catch (error) {
+                console.error('手机号登录错误:', error);
+                showError('网络错误，请稍后重试');
+            }
+        }
+
+        // 邮箱登录
+        async function handleEmailLogin() {
+            const email = document.getElementById('emailLoginAddress').value.trim();
+            const password = document.getElementById('emailLoginPassword').value;
+
+            if (!email || !password) {
+                showError('请填写邮箱和密码');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/login/email', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    handleLoginSuccess(result.data);
+                } else {
+                    showError(result.message || '登录失败');
+                }
+            } catch (error) {
+                console.error('邮箱登录错误:', error);
+                showError('网络错误，请稍后重试');
+            }
+        }
+
+        // 邮箱注册
+        async function handleEmailRegister() {
+            const email = document.getElementById('emailRegisterAddress').value.trim();
+            const password = document.getElementById('emailRegisterPassword').value;
+            const passwordConfirm = document.getElementById('emailRegisterPasswordConfirm').value;
+            const nickname = document.getElementById('emailRegisterNickname').value.trim();
+
+            if (!email || !password) {
+                showError('请填写邮箱和密码');
+                return;
+            }
+
+            if (password.length < 6) {
+                showError('密码至少需要6个字符');
+                return;
+            }
+
+            if (password !== passwordConfirm) {
+                showError('两次输入的密码不一致');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/register/email', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email, password, nickname })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    handleLoginSuccess(result.data);
+                } else {
+                    showError(result.message || '注册失败');
+                }
+            } catch (error) {
+                console.error('邮箱注册错误:', error);
+                showError('网络错误，请稍后重试');
+            }
+        }
+
+        // 用户名登录（兼容旧系统）
+        async function handleUsernameLogin() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            if (!username || !password) {
+                showError('请填写用户名和密码');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username, password })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // 保存令牌
+                    localStorage.setItem('token', result.data.token);
+                    localStorage.setItem('user', JSON.stringify(result.data));
+
+                    showSuccess('登录成功！正在跳转...');
+
+                    // 根据用户类型跳转
+                    setTimeout(() => {
+                        if (result.data.user_type === 'student') {
+                            window.location.href = '/student';
+                        } else if (result.data.user_type === 'parent') {
+                            window.location.href = '/parent';
+                        }
+                    }, 1000);
+                } else {
+                    showError(result.detail || '登录失败');
+                }
+            } catch (error) {
+                console.error('登录错误:', error);
+                showError('网络错误，请稍后重试');
+            }
+        }
+
+        // 处理旧版注册
+        async function handleRegister() {
+            const username = document.getElementById('registerUsername').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+            const fullName = document.getElementById('registerFullName').value.trim();
+            const userType = document.getElementById('registerUserType').value;
+
+            if (!username || !email || !password) {
+                showError('请填写所有必填字段');
+                return;
+            }
+
+            if (password.length < 6) {
+                showError('密码至少需要6个字符');
+                return;
+            }
+
+            if (password !== passwordConfirm) {
+                showError('两次输入的密码不一致');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        username,
+                        email,
+                        password,
+                        full_name: fullName,
+                        user_type: userType
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    localStorage.setItem('token', result.data.token);
+                    localStorage.setItem('user', JSON.stringify(result.data));
+
+                    showSuccess('注册成功！正在跳转...');
+
+                    setTimeout(() => {
+                        if (result.data.user_type === 'student') {
+                            window.location.href = '/student';
+                        } else if (result.data.user_type === 'parent') {
+                            window.location.href = '/parent';
+                        }
+                    }, 1000);
+                } else {
+                    showError(result.detail || '注册失败');
+                }
+            } catch (error) {
+                console.error('注册错误:', error);
+                showError('网络错误，请稍后重试');
+            }
+        }
+
+        // 微信H5登录
+        function handleWeChatLogin() {
+            showError('微信H5登录需要配置微信公众号，请联系管理员配置');
+            // 实际使用时的代码：
+            // window.location.href = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=YOUR_APPID&redirect_uri=YOUR_REDIRECT&response_type=code&scope=snsapi_userinfo&state=STATE#wechat_redirect';
+        }
+
+        // 微信小程序登录
+        function handleWeChatMiniLogin() {
+            showError('微信小程序登录需要在小程序中使用，请使用其他登录方式');
+        }
+
+        // 统一处理登录成功
+        function handleLoginSuccess(data) {
+            // 保存令牌（新系统使用access_token和refresh_token）
+            if (data.tokens) {
+                localStorage.setItem('token', data.tokens.access_token);
+                localStorage.setItem('refresh_token', data.tokens.refresh_token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+            } else if (data.token) {
+                // 兼容旧系统
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data));
+            }
+
+            showSuccess('登录成功！正在跳转...');
+
+            // 跳转到学生页面（默认）
+            setTimeout(() => {
+                window.location.href = '/student';
+            }, 1000);
+        }
+
+        // 显示错误消息
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        // 显示成功消息
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        // 隐藏消息
+        function hideMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        // 回车提交
+        document.addEventListener('DOMContentLoaded', () => {
+            // 手机号登录
+            document.getElementById('phoneCode').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handlePhoneLogin();
+            });
+
+            // 邮箱登录
+            document.getElementById('emailLoginPassword').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleEmailLogin();
+            });
+
+            // 邮箱注册
+            document.getElementById('emailRegisterPasswordConfirm').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleEmailRegister();
+            });
+
+            // 用户名登录
+            document.getElementById('loginPassword').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleUsernameLogin();
+            });
+
+            // 旧版注册
+            document.getElementById('registerPasswordConfirm').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleRegister();
+            });
+        });
+
+        // 检查是否已登录
+        window.onload = () => {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+            if (token) {
+                // 已登录，直接跳转
+                window.location.href = '/student';
+            }
+        };
+    </script>
+</body>
+</html>

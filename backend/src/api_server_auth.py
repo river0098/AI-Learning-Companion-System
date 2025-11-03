@@ -24,6 +24,13 @@ from main import AILearningCompanion
 from storage.database import db, User
 from auth import create_access_token, get_current_user, decode_access_token, TokenData
 from ai_companion.doubao_api import doubao_client
+from storage.auth_database import auth_db
+from services.auth_service import (
+    send_sms_code, login_with_phone, login_with_email,
+    register_with_email, login_with_wechat_h5, login_with_wechat_mini,
+    bind_phone, bind_email, unbind_auth, refresh_access_token,
+    get_user_auth_accounts
+)
 
 # 创建FastAPI应用
 app = FastAPI(
@@ -66,6 +73,68 @@ class UserLogin(BaseModel):
 class VisionFrame(BaseModel):
     """视觉帧数据"""
     frame_data: str  # Base64编码的图像
+
+
+class PhoneSMSRequest(BaseModel):
+    """手机号发送验证码请求"""
+    phone_number: str
+    purpose: str = "login"  # login, register, bind
+
+
+class PhoneLoginRequest(BaseModel):
+    """手机号登录请求"""
+    phone_number: str
+    code: str
+    device_id: Optional[str] = None
+
+
+class EmailLoginRequest(BaseModel):
+    """邮箱登录请求"""
+    email: EmailStr
+    password: str
+    device_id: Optional[str] = None
+
+
+class EmailRegisterRequest(BaseModel):
+    """邮箱注册请求"""
+    email: EmailStr
+    password: str
+    nickname: Optional[str] = None
+    device_id: Optional[str] = None
+
+
+class WeChatH5LoginRequest(BaseModel):
+    """微信H5登录请求"""
+    code: str  # OAuth code
+    device_id: Optional[str] = None
+
+
+class WeChatMiniLoginRequest(BaseModel):
+    """微信小程序登录请求"""
+    code: str  # 小程序登录code
+    device_id: Optional[str] = None
+
+
+class BindPhoneRequest(BaseModel):
+    """绑定手机号请求"""
+    phone_number: str
+    code: str
+
+
+class BindEmailRequest(BaseModel):
+    """绑定邮箱请求"""
+    email: EmailStr
+    password: str
+
+
+class UnbindRequest(BaseModel):
+    """解绑认证请求"""
+    auth_type: str  # phone, email, wechat_h5, wechat_mini
+
+
+class RefreshTokenRequest(BaseModel):
+    """刷新Token请求"""
+    refresh_token: str
 
 
 # ==================== 认证端点 ====================
@@ -154,6 +223,261 @@ async def login(credentials: UserLogin):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ==================== 多登录方式端点 ====================
+
+@app.post("/api/auth/sms/send")
+async def send_sms(request: PhoneSMSRequest):
+    """发送短信验证码"""
+    try:
+        result = send_sms_code(request.phone_number, request.purpose)
+        if result.get("success"):
+            return {
+                "success": True,
+                "message": "验证码已发送",
+                "data": {
+                    "expires_in": 300  # 5分钟
+                }
+            }
+        else:
+            raise HTTPException(status_code=400, detail=result.get("error", "发送失败"))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/auth/login/phone")
+async def login_phone(request: PhoneLoginRequest):
+    """手机号+验证码登录"""
+    try:
+        result = login_with_phone(
+            phone_number=request.phone_number,
+            code=request.code,
+            device_id=request.device_id
+        )
+
+        if result.get("success"):
+            return {
+                "success": True,
+                "message": "登录成功",
+                "data": result
+            }
+        else:
+            raise HTTPException(status_code=401, detail=result.get("error", "登录失败"))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/auth/login/email")
+async def login_email(request: EmailLoginRequest):
+    """邮箱+密码登录"""
+    try:
+        result = login_with_email(
+            email=request.email,
+            password=request.password,
+            device_id=request.device_id
+        )
+
+        if result.get("success"):
+            return {
+                "success": True,
+                "message": "登录成功",
+                "data": result
+            }
+        else:
+            raise HTTPException(status_code=401, detail=result.get("error", "登录失败"))
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/auth/register/email")
+async def register_email(request: EmailRegisterRequest):
+    """邮箱注册"""
+    try:
+        result = register_with_email(
+            email=request.email,
+            password=request.password,
+            nickname=request.nickname,
+            device_id=request.device_id
+        )
+
+        if result.get("success"):
+            return {
+                "success": True,
+                "message": "注册成功",
+                "data": result
+            }
+        else:
+            raise HTTPException(status_code=400, detail=result.get("error", "注册失败"))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/auth/login/wechat_h5")
+async def login_wechat_h5(request: WeChatH5LoginRequest):
+    """微信H5网页登录"""
+    try:
+        result = login_with_wechat_h5(
+            code=request.code,
+            device_id=request.device_id
+        )
+
+        if result.get("success"):
+            return {
+                "success": True,
+                "message": "登录成功",
+                "data": result
+            }
+        else:
+            raise HTTPException(status_code=401, detail=result.get("error", "登录失败"))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/auth/login/wechat_mini")
+async def login_wechat_mini(request: WeChatMiniLoginRequest):
+    """微信小程序登录"""
+    try:
+        result = login_with_wechat_mini(
+            code=request.code,
+            device_id=request.device_id
+        )
+
+        if result.get("success"):
+            return {
+                "success": True,
+                "message": "登录成功",
+                "data": result
+            }
+        else:
+            raise HTTPException(status_code=401, detail=result.get("error", "登录失败"))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/auth/token/refresh")
+async def refresh_token(request: RefreshTokenRequest):
+    """刷新访问令牌"""
+    try:
+        result = refresh_access_token(request.refresh_token)
+
+        if result.get("success"):
+            return {
+                "success": True,
+                "message": "令牌刷新成功",
+                "data": result
+            }
+        else:
+            raise HTTPException(status_code=401, detail=result.get("error", "刷新失败"))
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/auth/bind/phone")
+async def bind_phone_endpoint(
+    request: BindPhoneRequest,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """绑定手机号"""
+    try:
+        result = bind_phone(
+            user_id=current_user.user_id,
+            phone_number=request.phone_number,
+            code=request.code
+        )
+
+        if result.get("success"):
+            return {
+                "success": True,
+                "message": "手机号绑定成功",
+                "data": result
+            }
+        else:
+            raise HTTPException(status_code=400, detail=result.get("error", "绑定失败"))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/auth/bind/email")
+async def bind_email_endpoint(
+    request: BindEmailRequest,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """绑定邮箱"""
+    try:
+        result = bind_email(
+            user_id=current_user.user_id,
+            email=request.email,
+            password=request.password
+        )
+
+        if result.get("success"):
+            return {
+                "success": True,
+                "message": "邮箱绑定成功",
+                "data": result
+            }
+        else:
+            raise HTTPException(status_code=400, detail=result.get("error", "绑定失败"))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/auth/unbind")
+async def unbind_auth_endpoint(
+    request: UnbindRequest,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """解绑认证方式"""
+    try:
+        result = unbind_auth(
+            user_id=current_user.user_id,
+            auth_type=request.auth_type
+        )
+
+        if result.get("success"):
+            return {
+                "success": True,
+                "message": f"已解绑{request.auth_type}",
+                "data": result
+            }
+        else:
+            raise HTTPException(status_code=400, detail=result.get("error", "解绑失败"))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/auth/accounts")
+async def get_auth_accounts(current_user: TokenData = Depends(get_current_user)):
+    """获取用户的所有认证账号"""
+    try:
+        accounts = get_user_auth_accounts(current_user.user_id)
+        return {
+            "success": True,
+            "data": {
+                "accounts": accounts
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/auth/me")
 async def get_current_user_info(current_user: TokenData = Depends(get_current_user)):
     """获取当前用户信息（包含会员状态和使用时长）"""
@@ -166,6 +490,9 @@ async def get_current_user_info(current_user: TokenData = Depends(get_current_us
 
     # 获取今日使用记录
     today_usage = db.get_daily_usage(user.id)
+
+    # 获取绑定的认证账号
+    auth_accounts = get_user_auth_accounts(current_user.user_id)
 
     return {
         "success": True,
@@ -183,7 +510,8 @@ async def get_current_user_info(current_user: TokenData = Depends(get_current_us
             "remaining_time": remaining_time,
             "can_use": can_use,
             "created_at": user.created_at.isoformat() if user.created_at else None,
-            "last_login": user.last_login.isoformat() if user.last_login else None
+            "last_login": user.last_login.isoformat() if user.last_login else None,
+            "linked_accounts": auth_accounts
         }
     }
 
@@ -551,7 +879,13 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
 
 @app.get("/", response_class=FileResponse)
 async def index():
-    """返回登录页面"""
+    """返回统一登录页面"""
+    return FileResponse("../../frontend/public/login_unified.html")
+
+
+@app.get("/login", response_class=FileResponse)
+async def login_page():
+    """登录页面（旧版兼容）"""
     return FileResponse("../../frontend/public/login.html")
 
 
@@ -565,6 +899,12 @@ async def student_page():
 async def parent_page():
     """家长仪表板页面"""
     return FileResponse("../../frontend/public/parent_auth.html")
+
+
+@app.get("/account-settings", response_class=FileResponse)
+async def account_settings_page():
+    """账号设置页面"""
+    return FileResponse("../../frontend/public/account_settings.html")
 
 
 # ==================== 会员管理端点 ====================
