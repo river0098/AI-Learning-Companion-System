@@ -61,6 +61,17 @@
             50% { box-shadow: 0 0 20px rgba(255,215,0,0.8); }
         }
 
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(1.2);
+            }
+        }
+
         .btn-logout {
             padding: 8px 16px;
             background: rgba(255,255,255,0.2);
@@ -354,7 +365,10 @@
                     <canvas id="canvas" style="display:none;"></canvas>
 
                     <div class="camera-controls">
-                        <button class="btn btn-primary" id="btnStartCamera" onclick="startCamera()">
+                        <button class="btn btn-success" id="btnQuickStart" onclick="quickStartLearning()" style="font-size: 18px; padding: 15px 30px;">
+                            🚀 一键开始伴学
+                        </button>
+                        <button class="btn btn-primary hidden" id="btnStartCamera" onclick="startCamera()">
                             启动摄像头
                         </button>
                         <button class="btn btn-success hidden" id="btnStartLearning" onclick="startLearning()">
@@ -367,6 +381,20 @@
 
                     <div id="analysisResults" class="hidden">
                         <h3 style="margin-top: 30px;">实时AI分析</h3>
+
+                        <!-- 分析状态指示器 -->
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding: 10px; background: #f0f9ff; border-radius: 8px;">
+                            <div id="analysisStatusIndicator" style="width: 10px; height: 10px; border-radius: 50%; background: #4ade80; animation: pulse 2s infinite;"></div>
+                            <div>
+                                <div style="font-weight: 600; color: #667eea;">正在实时监控学习状态</div>
+                                <div style="font-size: 0.85em; color: #666;">
+                                    <span id="analysisCountDisplay">已分析 0 次</span> |
+                                    <span id="lastAnalysisTime">刚刚</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 基础分析结果 -->
                         <div class="analysis-result">
                             <div class="analysis-item">
                                 <span>姿势：</span>
@@ -383,6 +411,19 @@
                             <div class="analysis-item">
                                 <span>活跃度：</span>
                                 <strong id="activity">-</strong>
+                            </div>
+                        </div>
+
+                        <!-- 高级AI分析结果 -->
+                        <div id="advancedAnalysisSection" class="hidden" style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); border-radius: 10px;">
+                            <h4 style="color: #667eea; margin-bottom: 10px;">🤖 AI深度分析</h4>
+                            <div id="learningContentDisplay" style="margin-bottom: 10px;">
+                                <strong>学习内容：</strong>
+                                <span id="learningContent" style="color: #666;">识别中...</span>
+                            </div>
+                            <div id="postureStateDisplay">
+                                <strong>状态评估：</strong>
+                                <span id="postureState" style="color: #666;">分析中...</span>
                             </div>
                         </div>
                     </div>
@@ -588,6 +629,24 @@
             window.location.href = '/';
         }
 
+        // 一键开始伴学
+        async function quickStartLearning() {
+            const quickStartBtn = document.getElementById('btnQuickStart');
+            quickStartBtn.disabled = true;
+            quickStartBtn.textContent = '🔄 正在启动...';
+
+            try {
+                // 直接调用startLearning，它会自动处理摄像头启动
+                await startLearning();
+                quickStartBtn.classList.add('hidden');
+            } catch (error) {
+                console.error('一键启动失败:', error);
+                quickStartBtn.disabled = false;
+                quickStartBtn.textContent = '🚀 一键开始伴学';
+                alert('启动失败：' + error.message);
+            }
+        }
+
         // 启动摄像头
         async function startCamera() {
             try {
@@ -609,13 +668,23 @@
             } catch (error) {
                 console.error('摄像头启动失败:', error);
                 alert('无法访问摄像头，请检查浏览器权限');
+                throw error; // 重新抛出错误让上层处理
             }
         }
 
         // 开始伴学
         async function startLearning() {
             try {
-                // 调用API开始会话
+                // 1. 检查摄像头是否已启动，如果没有则自动启动
+                if (!stream) {
+                    console.log('摄像头未启动，正在自动启动...');
+                    await startCamera();
+
+                    // 等待1秒让摄像头完全就绪
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+
+                // 2. 调用API开始会话
                 const response = await fetch('/api/session/start', {
                     method: 'POST',
                     headers: {
@@ -630,21 +699,26 @@
                     isLearning = true;
 
                     // 更新UI
+                    document.getElementById('btnStartCamera').classList.add('hidden');
                     document.getElementById('btnStartLearning').classList.add('hidden');
                     document.getElementById('btnStopLearning').classList.remove('hidden');
                     document.getElementById('analysisResults').classList.remove('hidden');
 
-                    // 开始定期分析
-                    analysisInterval = setInterval(analyzeFrame, 3000);  // 每3秒分析一次
+                    // 3. 立即进行第一次分析
+                    console.log('📸 开始实时AI分析...');
+                    await analyzeFrame();
 
-                    addAIMessage('伴学已开始！我会关注你的学习状态，有需要随时告诉我！');
-                    console.log('✓ 伴学已开始');
+                    // 4. 开始定期分析（每3秒一次）
+                    analysisInterval = setInterval(analyzeFrame, 3000);
+
+                    addAIMessage('✅ 伴学已开始！摄像头已启动，AI正在实时分析你的学习状态！');
+                    console.log('✓ 伴学已开始 - 摄像头监控中');
                 } else {
                     alert('开始会话失败：' + (result.detail || '未知错误'));
                 }
             } catch (error) {
                 console.error('开始伴学失败:', error);
-                alert('连接服务器失败');
+                alert('启动失败：' + error.message);
             }
         }
 
@@ -689,6 +763,10 @@
             }
         }
 
+        // 分析计数器
+        let analysisCount = 0;
+        let lastAdvancedAnalysis = 0;
+
         // 分析摄像头帧
         async function analyzeFrame() {
             if (!isLearning) return;
@@ -697,6 +775,12 @@
                 const video = document.getElementById('videoPreview');
                 const canvas = document.getElementById('canvas');
                 const ctx = canvas.getContext('2d');
+
+                // 检查视频是否就绪
+                if (video.videoWidth === 0 || video.videoHeight === 0) {
+                    console.warn('视频尚未就绪，跳过本次分析');
+                    return;
+                }
 
                 // 设置canvas尺寸
                 canvas.width = video.videoWidth;
@@ -708,8 +792,15 @@
                 // 转换为Base64
                 const frameData = canvas.toDataURL('image/jpeg', 0.8);
 
-                // 发送到服务器分析
-                const response = await fetch('/api/vision/analyze', {
+                analysisCount++;
+                console.log(`📊 第${analysisCount}次分析 - ${new Date().toLocaleTimeString()}`);
+
+                // 更新UI显示
+                document.getElementById('analysisCountDisplay').textContent = `已分析 ${analysisCount} 次`;
+                document.getElementById('lastAnalysisTime').textContent = new Date().toLocaleTimeString();
+
+                // 1. 基础视觉分析（不消耗配额，每次都执行）
+                const basicResponse = await fetch('/api/vision/analyze', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -718,18 +809,94 @@
                     body: JSON.stringify({ frame_data: frameData })
                 });
 
-                const result = await response.json();
+                const basicResult = await basicResponse.json();
 
-                if (result.success && result.data.sampled) {
-                    updateAnalysisDisplay(result.data.vision);
+                if (basicResult.success) {
+                    // 更新基础分析显示
+                    if (basicResult.data.sampled && basicResult.data.vision) {
+                        updateAnalysisDisplay(basicResult.data.vision);
+                        console.log('✓ 基础分析完成：', basicResult.data.vision);
+                    }
 
-                    // 如果有AI消息
-                    if (result.data.ai_message) {
-                        addAIMessage(result.data.ai_message);
+                    // 显示AI干预消息
+                    if (basicResult.data.ai_message) {
+                        addAIMessage('🤖 ' + basicResult.data.ai_message);
                     }
                 }
+
+                // 2. 高级AI分析（消耗配额，每10次基础分析执行1次，即每30秒）
+                const now = Date.now();
+                const shouldDoAdvanced = (analysisCount % 10 === 0) || (now - lastAdvancedAnalysis > 30000);
+
+                if (shouldDoAdvanced) {
+                    try {
+                        console.log('🚀 执行高级AI分析...');
+                        const advancedResponse = await fetch('/api/vision/analyze_advanced', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ frame_data: frameData })
+                        });
+
+                        const advancedResult = await advancedResponse.json();
+
+                        if (advancedResult.success) {
+                            lastAdvancedAnalysis = now;
+
+                            // 显示高级分析区域
+                            document.getElementById('advancedAnalysisSection').classList.remove('hidden');
+
+                            // 显示学习内容分析
+                            if (advancedResult.data.learning_content?.success) {
+                                const content = advancedResult.data.learning_content.analysis;
+                                console.log('📚 学习内容：', content.substring(0, 100) + '...');
+
+                                // 更新UI显示
+                                const contentEl = document.getElementById('learningContent');
+                                contentEl.textContent = content.substring(0, 150) + '...';
+                                contentEl.style.color = '#333';
+
+                                // 同时显示在AI消息中
+                                addAIMessage('📚 学习内容识别：\n' + content.substring(0, 200) + '...');
+                            }
+
+                            // 显示姿势和状态分析
+                            if (advancedResult.data.posture_and_state?.success) {
+                                const state = advancedResult.data.posture_and_state.analysis;
+                                console.log('🧘 状态分析：', state.substring(0, 100) + '...');
+
+                                // 更新UI显示
+                                const stateEl = document.getElementById('postureState');
+                                stateEl.textContent = state.substring(0, 150) + '...';
+                                stateEl.style.color = '#333';
+                            }
+
+                            // 更新配额显示
+                            if (advancedResult.data.usage_info) {
+                                const usage = advancedResult.data.usage_info;
+                                await loadMembershipStatus(); // 刷新配额显示
+
+                                if (!usage.can_continue) {
+                                    addAIMessage('⚠️ AI分析配额已用完，明天将自动重置。可升级VIP享受无限制使用！');
+                                    // 停止高级分析但继续基础分析
+                                }
+                            }
+
+                            console.log('✓ 高级AI分析完成');
+                        }
+                    } catch (advError) {
+                        if (advError.status === 403) {
+                            console.warn('⚠️ AI分析配额不足');
+                        } else {
+                            console.error('高级分析失败:', advError);
+                        }
+                    }
+                }
+
             } catch (error) {
-                console.error('分析失败:', error);
+                console.error('❌ 分析失败:', error);
             }
         }
 
