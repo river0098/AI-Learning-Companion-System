@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 import os
 import hashlib
 import secrets
+import random
 
 # 创建FastAPI应用
 app = FastAPI(
@@ -244,6 +245,94 @@ async def account_settings_page():
     """账号设置页面"""
     return FileResponse("../../frontend/public/account_settings_modern.html")
 
+# ==================== AI聊天端点（模拟） ====================
+
+# 简单的AI响应模板
+AI_RESPONSES = {
+    "coach": [
+        "加油！你正在做得很好，继续保持专注！💪",
+        "很棒！记得每学习25分钟休息5分钟哦。",
+        "注意力很集中，保持这个状态！要不要喝点水？",
+        "你已经学习了一段时间了，做得真不错！",
+        "继续加油！学习贵在坚持。",
+    ],
+    "tutor": [
+        "有什么不懂的可以问我哦，我会尽力帮助你！📚",
+        "学习要循序渐进，不要着急。",
+        "遇到难题很正常，耐心思考就能解决。",
+        "可以试着用自己的话总结一下刚才学的内容。",
+        "理解概念比死记硬背更重要。",
+    ],
+    "friend": [
+        "学习累了吗？休息一下也很重要哦！😊",
+        "你今天的学习状态很不错呢！",
+        "加油！我相信你可以的！",
+        "记得劳逸结合，身体健康也很重要。",
+        "一起努力，让学习变得更有趣！",
+    ]
+}
+
+@app.post("/api/session/start")
+async def start_session():
+    """开始学习会话（模拟）"""
+    return {
+        "success": True,
+        "data": {
+            "session_id": f"session_{int(datetime.now().timestamp())}",
+            "start_time": datetime.now().isoformat(),
+            "message": "学习会话已开始，加油！"
+        }
+    }
+
+@app.post("/api/session/end")
+async def end_session():
+    """结束学习会话（模拟）"""
+    return {
+        "success": True,
+        "data": {
+            "duration": 1800,  # 30分钟
+            "focused_time": 1500,  # 25分钟
+            "productivity": 83,
+            "message": "本次学习会话已结束，辛苦了！"
+        }
+    }
+
+@app.post("/api/chat/message")
+async def send_chat_message(message: str, mode: str = "coach"):
+    """AI聊天（模拟智能回复）"""
+    # 根据消息内容生成智能回复
+    message_lower = message.lower()
+
+    # 简单的关键词匹配
+    if any(word in message_lower for word in ["累", "tired", "休息"]):
+        response = "看起来你有点累了，建议休息5-10分钟，喝点水放松一下。适当休息能提高学习效率！😊"
+    elif any(word in message_lower for word in ["不会", "不懂", "难", "困难"]):
+        response = "遇到困难很正常，这恰恰说明你在挑战自己！可以试试：\n1. 把问题拆分成小块\n2. 查找相关资料\n3. 做个简单的笔记\n慢慢来，你一定能搞懂的！💪"
+    elif any(word in message_lower for word in ["加油", "努力", "继续"]):
+        response = "太棒了！你的学习态度真好！继续保持这份热情，成功就在前方！加油加油！🎉"
+    elif any(word in message_lower for word in ["谢谢", "thanks"]):
+        response = "不客气！能帮到你我很开心。有任何问题随时问我哦！😊"
+    elif any(word in message_lower for word in ["你好", "hello", "hi"]):
+        response = f"你好！我是你的AI学习伙伴（{mode}模式）。我会在学习过程中陪伴和鼓励你。有什么需要帮助的吗？"
+    else:
+        # 根据模式随机选择响应
+        responses = AI_RESPONSES.get(mode, AI_RESPONSES["coach"])
+        response = random.choice(responses)
+
+        # 添加一些上下文相关的回复
+        if len(message) > 20:
+            response += " 我看到你说了很多，说明你在认真思考，这很好！"
+
+    return {
+        "success": True,
+        "data": {
+            "ai_message": response,
+            "mode": mode,
+            "timestamp": datetime.now().isoformat(),
+            "intent": "general"
+        }
+    }
+
 # ==================== 系统端点 ====================
 
 @app.get("/api/status")
@@ -259,7 +348,8 @@ async def get_status():
                 "basic_auth": True,
                 "phone_login": True,
                 "email_login": True,
-                "static_files": True
+                "static_files": True,
+                "ai_chat": True
             }
         }
     }
